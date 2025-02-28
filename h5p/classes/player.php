@@ -529,6 +529,8 @@ class player {
         global $PAGE;
 
         $safeparams = $this->core->filterParameters($this->content);
+        $safeparams = $this->override_default_text_track_to_user_language($safeparams);
+        
         $decodedparams = json_decode($safeparams);
         $h5poutput = $PAGE->get_renderer('core_h5p');
         $h5poutput->h5p_alter_filtered_parameters(
@@ -540,6 +542,39 @@ class player {
         $safeparams = json_encode($decodedparams);
 
         return $safeparams;
+    }
+
+    /**
+     * Rearranges the video tracks so that the track matching the current language is placed at the top.
+     *
+     * This function sorts the video tracks in the `$safeparams` array, giving priority to the track
+     * whose `srcLang` matches the current language. All other tracks are preserved in their original order.
+     * The `$safeparams` array is modified directly, and the updated parameters are returned as a JSON-encoded string.
+     *
+     * @param string $safeparams A JSON-encoded string containing the sorted parameters.
+     * @return string The updated JSON-encoded string with the video tracks rearranged.
+     */
+    private function override_default_text_track_to_user_language($safeparams) {
+        $decodedparams = json_decode($safeparams);
+
+        if (isset($decodedparams->interactiveVideo->video->textTracks->videoTrack)) {
+            $video_tracks = $decodedparams->interactiveVideo->video->textTracks->videoTrack;
+
+            usort($video_tracks, function($a, $b) {
+                // Check if the current language track is at the top
+                if ($a->srcLang == current_language()) {
+                    return -1; // Place $a at the top
+                }
+                if ($b->srcLang == current_language()) {
+                    return 1; // Place $b at the top
+                }
+                return 0; // Keep other tracks in the same order
+            });
+
+            $decodedparams->interactiveVideo->video->textTracks->videoTrack = $video_tracks;
+        }
+
+        return json_encode($decodedparams);
     }
 
     /**
