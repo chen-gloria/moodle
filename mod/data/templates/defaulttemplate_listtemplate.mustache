@@ -41,12 +41,12 @@
                 <div class="col-3 align-self-center">
                     ##user##<br/><span class="data-timeinfo">##timeadded##</span>
                 </div>
-                <div class="col-4 col-md-6 text-right align-self-center data-timeinfo">
-                    <span class="font-weight-bold ">{{#str}}datemodified, mod_data{{/str}}&nbsp;</span>##timemodified##
+                <div class="col-4 col-md-6 text-end align-self-center data-timeinfo">
+                    <span class="fw-bold ">{{#str}}datemodified, mod_data{{/str}}&nbsp;</span>##timemodified##
                 </div>
-                <div class="col-4 col-md-3 ml-auto align-self-center d-flex flex-row-reverse">
+                <div class="col-4 col-md-3 ms-auto align-self-center d-flex flex-row-reverse">
                     <div>##actionsmenu##</div>
-                    <div class="ml-auto my-auto ##approvalstatusclass##">##approvalstatus##</div>
+                    <div class="ms-auto my-auto ##approvalstatusclass##">##approvalstatus##</div>
                 </div>
             </div>
         </div>
@@ -56,13 +56,13 @@
     <div class="defaulttemplate-list-body">
         {{#fields}}
             <div class="row my-3 align-items-start justify-content-start">
-                <div class="col-4 col-lg-3 font-weight-bold">{{fieldname}}</div>
-                <div class="col-8 col-lg-9 ml-n3">{{{fieldcontent}}}</div>
+                <div class="col-4 col-lg-3 fw-bold">{{fieldname}}</div>
+                <div class="col-8 col-lg-9 ms-n3">{{{fieldcontent}}}</div>
             </div>
         {{/fields}}
         {{#tags}}
             <div class="mb-4">
-                <span class="font-weight-bold">{{#str}}tags{{/str}}</span>
+                <span class="fw-bold">{{#str}}tags{{/str}}</span>
                 <p class="mt-2">{{.}}</p>
             </div>
         {{/tags}}

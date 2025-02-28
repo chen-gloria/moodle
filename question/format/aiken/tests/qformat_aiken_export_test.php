@@ -21,6 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core_question\local\bank\question_version_status;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -35,8 +37,9 @@ require_once($CFG->dirroot . '/question/editlib.php');
  *
  * @copyright  2018 Jean-Michel vedrine)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \qformat_aiken
  */
-class qformat_aiken_export_test extends advanced_testcase {
+final class qformat_aiken_export_test extends advanced_testcase {
     /**
      * Assert that 2 strings are the same, ignoring ends of line.
      * We need to override this function because we don't want any output
@@ -56,8 +59,9 @@ class qformat_aiken_export_test extends advanced_testcase {
         // Create a new course category and and a new course in that.
         $category = $this->getDataGenerator()->create_category();
         $course = $this->getDataGenerator()->create_course(array('category' => $category->id));
+        $qbank = self::getDataGenerator()->create_module('qbank', ['course' => $course->id]);
+        $context = context_module::instance($qbank->cmid);
         $generator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $context = context_coursecat::instance($category->id);
         $cat = $generator->create_question_category(array('contextid' => $context->id));
         $question1 = $generator->create_question('shortanswer', null,
                 array('category' => $cat->id));
@@ -91,7 +95,8 @@ EOT;
         $category = $this->getDataGenerator()->create_category();
         $course = $this->getDataGenerator()->create_course(array('category' => $category->id));
         $generator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $context = context_coursecat::instance($category->id);
+        $qbank = self::getDataGenerator()->create_module('qbank', ['course' => $course->id]);
+        $context = context_module::instance($qbank->cmid);
         $cat = $generator->create_question_category(array('contextid' => $context->id));
         $question  = $generator->create_question('multichoice', 'one_of_four',
                 array('category' => $cat->id));
@@ -111,6 +116,46 @@ D) Four
 ANSWER: A
 
 EOT;
+        $this->assert_same_aiken($expectedoutput, $exporter->exportprocess());
+    }
+
+    public function test_hidden_question_not_exported(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Create a new course category and a new course in that.
+        $category = $this->getDataGenerator()->create_category();
+        $course = $this->getDataGenerator()->create_course(['category' => $category->id]);
+        $generator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $context = context_coursecat::instance($category->id);
+        $cat = $generator->create_question_category(['contextid' => $context->id]);
+
+        // Create a visible and a hidden question.
+        $generator->create_question('multichoice', 'one_of_four', [
+            'category' => $cat->id,
+            'questiontext' => ['text' => 'This question is the visible one.', 'format' => FORMAT_HTML],
+        ]);
+        $generator->create_question('multichoice', 'one_of_four', [
+            'category' => $cat->id,
+            'questiontext' => ['text' => 'This question is the hidden one.', 'format' => FORMAT_HTML],
+            'status' => question_version_status::QUESTION_STATUS_HIDDEN,
+        ]);
+
+        // Prepared the expected result.
+        $expectedoutput = <<<EOT
+This question is the visible one.
+A) One
+B) Two
+C) Three
+D) Four
+ANSWER: A
+
+EOT;
+
+        // Do the export and verify.
+        $exporter = new qformat_aiken();
+        $exporter->category = $cat;
+        $exporter->setCourse($course);
         $this->assert_same_aiken($expectedoutput, $exporter->exportprocess());
     }
 }

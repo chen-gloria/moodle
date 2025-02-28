@@ -30,6 +30,7 @@
  */
 
 define('CLI_SCRIPT', true);
+define('NO_DEBUG_DISPLAY', false);
 
 // extra execution prevention - we can not just require config.php here
 if (isset($_SERVER['REMOTE_ADDR'])) {
@@ -179,13 +180,8 @@ ini_set('include_path', $CFG->libdir.'/pear' . PATH_SEPARATOR . ini_get('include
 // The core_component class can be used in any scripts, it does not need anything else.
 require_once($CFG->libdir.'/classes/component.php');
 
-// Register our classloader, in theory somebody might want to replace it to load other hacked core classes.
-// Required because the database checks below lead to session interaction which is going to lead us to requiring autoloaded classes.
-if (defined('COMPONENT_CLASSLOADER')) {
-    spl_autoload_register(COMPONENT_CLASSLOADER);
-} else {
-    spl_autoload_register('core_component::classloader');
-}
+// Register our classloader.
+\core\component::register_autoloader();
 
 require_once($CFG->libdir.'/classes/text.php');
 require_once($CFG->libdir.'/classes/string_manager.php');
@@ -200,7 +196,6 @@ require_once($CFG->libdir.'/moodlelib.php');
 require_once($CFG->libdir.'/deprecatedlib.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->libdir.'/componentlib.class.php');
-require_once($CFG->dirroot.'/cache/lib.php');
 
 require($CFG->dirroot.'/version.php');
 $CFG->target_release = $release;
@@ -222,7 +217,6 @@ $databases = array('mysqli' => moodle_database::get_driver_instance('mysqli', 'n
                    'auroramysql' => moodle_database::get_driver_instance('auroramysql', 'native'),
                    'mariadb'=> moodle_database::get_driver_instance('mariadb', 'native'),
                    'pgsql'  => moodle_database::get_driver_instance('pgsql',  'native'),
-                   'oci'    => moodle_database::get_driver_instance('oci',    'native'),
                    'sqlsrv' => moodle_database::get_driver_instance('sqlsrv', 'native'), // MS SQL*Server PHP driver
                   );
 foreach ($databases as $type=>$database) {
@@ -566,7 +560,6 @@ do {
     if ($interactive) {
         cli_separator();
         cli_heading(get_string('dbprefix', 'install'));
-        //TODO: solve somehow the prefix trouble for oci.
         if ($options['prefix'] !== '') {
             $prompt = get_string('clitypevaluedefault', 'admin', $options['prefix']);
         } else {

@@ -47,14 +47,14 @@ class mod_h5pactivity_generator extends testing_module_generator {
      * @return stdClass record from module-defined table with additional field
      *     cmid (corresponding id in course_modules table)
      */
-    public function create_instance($record = null, array $options = null): stdClass {
+    public function create_instance($record = null, ?array $options = null): stdClass {
         global $CFG, $USER;
         // Ensure the record can be modified without affecting calling code.
         $record = (object)(array)$record;
 
         // Fill in optional values if not specified.
         if (!isset($record->packagefilepath)) {
-            $record->packagefilepath = $CFG->dirroot.'/h5p/tests/fixtures/h5ptest.zip';
+            $record->packagefilepath = $CFG->dirroot.'/h5p/tests/fixtures/ipsums.h5p';
         } else if (strpos($record->packagefilepath, $CFG->dirroot) !== 0) {
             $record->packagefilepath = "{$CFG->dirroot}/{$record->packagefilepath}";
         }

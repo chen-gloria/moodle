@@ -72,16 +72,14 @@ M.core_comment = {
                 scope.toggle_textarea(false);
             },
             post: function() {
+                var container = Y.one('#comment-list-'+this.client_id);
                 var ta = Y.one('#dlg-content-'+this.client_id);
                 var scope = this;
                 var value = ta.get('value');
                 if (value && value != M.util.get_string('addcomment', 'moodle')) {
                     ta.set('disabled', true);
-                    ta.setStyles({
-                        'backgroundImage': 'url(' + M.util.image_url('i/loading_small', 'core') + ')',
-                        'backgroundRepeat': 'no-repeat',
-                        'backgroundPosition': 'center center'
-                    });
+                    var spinner = M.util.add_spinner(Y, container);
+                    spinner.show();
                     var params = {'content': value};
                     this.request({
                         action: 'add',
@@ -93,16 +91,16 @@ M.core_comment = {
                             var ta = Y.one('#dlg-content-'+cid);
                             ta.set('value', '');
                             ta.set('disabled', false);
-                            ta.setStyle('backgroundImage', 'none');
+                            spinner.remove();
                             scope.toggle_textarea(false);
                             var container = Y.one('#comment-list-'+cid);
                             var result = await scope.render([obj], true);
                             var newcomment = Y.Node.create(result.html);
                             container.appendChild(newcomment);
                             var ids = result.ids;
-                            var linkText = Y.one('#comment-link-text-' + cid);
-                            if (linkText) {
-                                linkText.set('innerHTML', M.util.get_string('commentscount', 'moodle', obj.count));
+                            var linkTextCount = Y.one('#comment-link-text-' + cid + ' .comment-link-count');
+                            if (linkTextCount) {
+                                linkTextCount.set('innerHTML', obj.count);
                             }
                             for(var i in ids) {
                                 var attributes = {
@@ -249,9 +247,9 @@ M.core_comment = {
                     scope: scope,
                     params: params,
                     callback: async function(id, ret, args) {
-                        var linkText = Y.one('#comment-link-text-' + scope.client_id);
-                        if (ret.count && linkText) {
-                            linkText.set('innerHTML', M.util.get_string('commentscount', 'moodle', ret.count));
+                        var linkTextCount = Y.one('#comment-link-text-' + scope.client_id + ' .comment-link-count');
+                        if (linkTextCount) {
+                            linkTextCount.set('innerHTML', ret.count);
                         }
                         var container = Y.one('#comment-list-'+scope.client_id);
                         var pagination = Y.one('#comment-pagination-'+scope.client_id);
@@ -284,10 +282,10 @@ M.core_comment = {
                     params = {'commentid': id};
                 function remove_dom(type, anim, cmt) {
                     cmt.remove();
-                    var linkText = Y.one('#comment-link-text-' + cid),
+                    var linkTextCount = Y.one('#comment-link-text-' + cid + ' .comment-link-count'),
                         comments = Y.all('#comment-list-' + cid + ' li');
-                    if (linkText && comments) {
-                        linkText.set('innerHTML', M.util.get_string('commentscount', 'moodle', comments.size()));
+                    if (linkTextCount) {
+                        linkTextCount.set('innerHTML', comments.size());
                     }
                 }
                 this.request({
@@ -401,8 +399,6 @@ M.core_comment = {
                     var collapsedimage = 't/collapsed'; // ltr mode
                     if ( Y.one(document.body).hasClass('dir-rtl') ) {
                         collapsedimage = 't/collapsed_rtl';
-                    } else {
-                        collapsedimage = 't/collapsed';
                     }
                     if (img) {
                         img.set('src', M.util.image_url(collapsedimage, 'core'));
@@ -451,7 +447,8 @@ M.core_comment = {
             },
             wait: function() {
                 var container = Y.one('#comment-list-'+this.client_id);
-                container.set('innerHTML', '<div class="mdl-align"><img src="'+M.util.image_url('i/loading_small', 'core')+'" /></div>');
+                container.set('innerHTML', '');
+                M.util.add_spinner(Y, container).show();
             }
         });
 

@@ -43,7 +43,6 @@ Feature: Backpack badges
       | language       | en                               |
       | description    | Test badge description           |
       | image          | badges/tests/behat/badge.png     |
-      | imageauthorurl | http://author.example.com        |
       | imagecaption   | Test caption image               |
     And the following "core_badges > Criteria" exists:
       | badge          | Test badge verify backpack       |
@@ -72,7 +71,6 @@ Feature: Backpack badges
       | language       | en                               |
       | description    | Test badge description           |
       | image          | badges/tests/behat/badge.png     |
-      | imageauthorurl | http://author.example.com        |
       | imagecaption   | Test caption image               |
     And the following "core_badges > Criteria" exists:
       | badge          | Test badge verify backpack       |
@@ -150,13 +148,9 @@ Feature: Backpack badges
     Then "Include authentication details with the backpack" "checkbox" should not be visible
     And I should not see "Badge issuer email address"
     And I should not see "Badge issuer password"
-    And I set the field "apiversion" to "1"
-    And "Include authentication details with the backpack" "checkbox" should be visible
-    And I click on "includeauthdetails" "checkbox"
-    And I should see "Badge issuer email address"
-    And I should not see "Badge issuer password"
     And I set the field "apiversion" to "2"
     And "Include authentication details with the backpack" "checkbox" should be visible
+    And I click on "includeauthdetails" "checkbox"
     And I should see "Badge issuer email address"
     And I should see "Badge issuer password"
     And I set the field "backpackemail" to "test@test.com"

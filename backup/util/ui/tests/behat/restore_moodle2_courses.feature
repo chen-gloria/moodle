@@ -275,7 +275,6 @@ Feature: Restore Moodle 2 course backups
       | Initial      | Include files                    | 0                   |
       | Initial      | Include filters                  | 0                   |
       | Initial      | Include calendar events          | 0                   |
-      | Initial      | Include question bank            | 0                   |
       | Initial      | Include groups and groupings     | 0                   |
       | Initial      | Include competencies             | 0                   |
       | Initial      | Include custom fields            | 0                   |
@@ -285,16 +284,16 @@ Feature: Restore Moodle 2 course backups
       | Confirmation | Filename                         | test_backup.mbz     |
     When I restore "test_backup.mbz" backup into a new course using this options:
       | Settings | Include badges | 1 |
-    And I navigate to "Badges > Manage badges" in current page administration
+    And I navigate to "Badges" in current page administration
     Then I should see "Published course badge"
     And I should see "Unpublished course badge"
     And I should see "Unpublished without criteria course badge"
     # If activities were included, the criteria have been restored too; otherwise no criteria have been set up for badges.
-    And I <shouldornotsee> "Criteria for this badge have not been set up yet" in the "Published course badge" "table_row"
-    And I <shouldornotsee> "Criteria for this badge have not been set up yet" in the "Unpublished course badge" "table_row"
-    And I should see "Criteria for this badge have not been set up yet" in the "Unpublished without criteria course badge" "table_row"
+    And ".no-criteria-set" "css_element" <shouldornotexist> in the "Published course badge" "table_row"
+    And ".no-criteria-set" "css_element" <shouldornotexist> in the "Unpublished course badge" "table_row"
+    And ".no-criteria-set" "css_element" should exist in the "Unpublished without criteria course badge" "table_row"
 
     Examples:
-      | includeactivities | shouldornotsee |
-      | 0                 | should see     |
-      | 1                 | should not see |
+      | includeactivities | shouldornotexist |
+      | 0                 | should exist     |
+      | 1                 | should not exist |

@@ -19,6 +19,7 @@ namespace core_tag;
 use core_tag_area;
 use core_tag_collection;
 use core_tag_tag;
+use core_tag;
 
 /**
  * Tag related unit tests.
@@ -28,7 +29,7 @@ use core_tag_tag;
  * @copyright 2014 Mark Nelson <markn@moodle.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class taglib_test extends \advanced_testcase {
+final class taglib_test extends \advanced_testcase {
 
     /**
      * Test set up.
@@ -38,39 +39,6 @@ class taglib_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
-    }
-
-    /**
-     * Test that the tag_set function throws an exception.
-     * This function was deprecated in 3.1
-     */
-    public function test_tag_set_get(): void {
-        $this->expectException('coding_exception');
-        $this->expectExceptionMessage('tag_set() can not be used anymore. Please use ' .
-            'core_tag_tag::set_item_tags().');
-        tag_set();
-    }
-
-    /**
-     * Test that tag_set_add function throws an exception.
-     * This function was deprecated in 3.1
-     */
-    public function test_tag_set_add(): void {
-        $this->expectException('coding_exception');
-        $this->expectExceptionMessage('tag_set_add() can not be used anymore. Please use ' .
-            'core_tag_tag::add_item_tag().');
-        tag_set_add();
-    }
-
-    /**
-     * Test that tag_set_delete function returns an exception.
-     * This function was deprecated in 3.1
-     */
-    public function test_tag_set_delete(): void {
-        $this->expectException('coding_exception');
-        $this->expectExceptionMessage('tag_set_delete() can not be used anymore. Please use ' .
-            'core_tag_tag::remove_item_tag().');
-        tag_set_delete();
     }
 
     /**
@@ -141,17 +109,6 @@ class taglib_test extends \advanced_testcase {
         $ti5 = core_tag_tag::add_item_tag('mod_book', 'book_chapters', $chapter1id,
             \context_module::instance($book1->cmid), 'A random tag for a book chapter');
         $this->assertEquals(1, $DB->get_field('tag_instance', 'ordering', ['id' => $ti5]));
-    }
-
-    /**
-     * Test that tag_assign function throws an exception.
-     * This function was deprecated in 3.1
-     */
-    public function test_tag_assign(): void {
-        $this->expectException(\coding_exception::class);
-        $this->expectExceptionMessage('tag_assign() can not be used anymore. Please use core_tag_tag::set_item_tags() ' .
-            'or core_tag_tag::add_item_tag() instead.');
-        tag_assign();
     }
 
     /**
@@ -832,17 +789,6 @@ class taglib_test extends \advanced_testcase {
         $this->assertEquals('Tag1', $user2tags[2]->rawname);
         $this->assertEquals($collid2, $user1tags[0]->tagcollid);
         $this->assertEquals($collid2, $user2tags[2]->tagcollid);
-    }
-
-    /**
-     * Tests that tag_normalize function throws an exception.
-     * This function was deprecated in 3.1
-     */
-    public function test_normalize(): void {
-        $this->expectException(\coding_exception::class);
-        $this->expectExceptionMessage('tag_normalize() can not be used anymore. Please use ' .
-            'core_tag_tag::normalize().');
-        tag_normalize();
     }
 
     /**
@@ -1994,5 +1940,52 @@ class taglib_test extends \advanced_testcase {
         $record['timecreated'] = time();
         $record['id'] = $DB->insert_record('tag_instance', $record);
         return (object) $record;
+    }
+
+    /**
+     * Checks the contents of the a tagcloud
+     *
+     * @param array $tags
+     * @param \core_tag\output\tagcloud $tagcloud
+     */
+    protected function assert_tag_cloud_contains_tags(array $tags, \core_tag\output\tagcloud $tagcloud) {
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('core', 'tag');
+        $result = $tagcloud->export_for_template($renderer);
+        $result = json_decode(json_encode($result), true);
+        $this->assertEqualsCanonicalizing($tags, array_values(array_column($result['tags'], 'name')));
+    }
+
+    public function test_get_tag_cloud(): void {
+        global $DB, $PAGE;
+        $this->resetAfterTest();
+
+        // Create a course and a user with tags.
+        $this->getDataGenerator()->create_course(['tags' => 'cats,animals']);
+        $this->getDataGenerator()->create_user(['interests' => 'dogs,animals']);
+
+        // Default tag cloud contains all three tags.
+        $tagcloud = core_tag_collection::get_tag_cloud(0);
+        $this->assert_tag_cloud_contains_tags(['animals', 'cats', 'dogs'], $tagcloud);
+
+        // Create two new tag collections, move course tags to C1 and user tags to C2.
+        $c1 = core_tag_collection::create((object)['name' => 'C1', 'searchable' => 1]);
+        $c2 = core_tag_collection::create((object)['name' => 'C2', 'searchable' => 1]);
+        $tagareacourse = $DB->get_record('tag_area', ['component' => 'core', 'itemtype' => 'course'], '*', MUST_EXIST);
+        core_tag_area::update($tagareacourse, ['tagcollid' => $c1->id]);
+        $tagareauser = $DB->get_record('tag_area', ['component' => 'core', 'itemtype' => 'user'], '*', MUST_EXIST);
+        core_tag_area::update($tagareauser, ['tagcollid' => $c2->id]);
+
+        // Tag cloud still has all tags and you can also search by a collection. Tag 'animals' now has two different view links.
+        $this->assert_tag_cloud_contains_tags(['animals', 'animals', 'cats', 'dogs'], core_tag_collection::get_tag_cloud(0));
+        $this->assert_tag_cloud_contains_tags(['animals', 'cats'], core_tag_collection::get_tag_cloud($c1->id));
+        $this->assert_tag_cloud_contains_tags(['animals', 'dogs'], core_tag_collection::get_tag_cloud($c2->id));
+
+        // Make user interest tag area not searchable.
+        core_tag_collection::update($c2, ['searchable' => 0]);
+        // Check that the user interest tags do not appear in the tagclouds.
+        $this->assert_tag_cloud_contains_tags(['animals', 'cats'], core_tag_collection::get_tag_cloud(0));
+        $this->assert_tag_cloud_contains_tags(['animals', 'cats'], core_tag_collection::get_tag_cloud($c1->id));
+        $this->assert_tag_cloud_contains_tags([], core_tag_collection::get_tag_cloud($c2->id));
     }
 }

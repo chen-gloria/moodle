@@ -186,11 +186,6 @@ class core_badges_renderer extends plugin_renderer_base {
         $dl[get_string('description', 'badges')] = $badge->description;
         $dl[get_string('createdon', 'search')] = userdate($badge->timecreated);
         $dl[get_string('badgeimage', 'badges')] = print_badge_image($badge, $context, 'large');
-        $dl[get_string('imageauthorname', 'badges')] = $badge->imageauthorname;
-        $dl[get_string('imageauthoremail', 'badges')] =
-            html_writer::tag('a', $badge->imageauthoremail, array('href' => 'mailto:' . $badge->imageauthoremail));
-        $dl[get_string('imageauthorurl', 'badges')] =
-            html_writer::link($badge->imageauthorurl, $badge->imageauthorurl, array('target' => '_blank'));
         $dl[get_string('imagecaption', 'badges')] = $badge->imagecaption;
         $tags = \core_tag_tag::get_item_tags('core_badges', 'badge', $badge->id);
         $dl[get_string('tags', 'badges')] = $this->output->tag_list($tags, '');
@@ -201,6 +196,11 @@ class core_badges_renderer extends plugin_renderer_base {
         $dl = array();
         $dl[get_string('issuername', 'badges')] = $badge->issuername;
         $dl[get_string('contact', 'badges')] = html_writer::tag('a', $badge->issuercontact, array('href' => 'mailto:' . $badge->issuercontact));
+        $dl[get_string('issuerurl', 'badges')] = html_writer::tag(
+            'a',
+            $badge->issuerurl,
+            ['href' => $badge->issuerurl, 'target' => '_blank'],
+        );
         $display .= $this->definition_list($dl);
 
         // Issuance details if any.
@@ -388,7 +388,7 @@ class core_badges_renderer extends plugin_renderer_base {
                     get_string('downloadall'), 'POST', array('class' => 'activatebadge'));
         $downloadall = $this->output->box('', 'col-md-3');
         $downloadall .= $this->output->box($actionhtml, 'col-md-9');
-        $downloadall = $this->output->box($downloadall, 'row ml-5');
+        $downloadall = $this->output->box($downloadall, 'row ms-5');
 
         // Local badges.
         $localhtml = html_writer::start_tag('div', array('id' => 'issued-badge-table', 'class' => 'generalbox'));
@@ -432,7 +432,7 @@ class core_badges_renderer extends plugin_renderer_base {
             $backpacksettings = html_writer::link(new moodle_url('/badges/mybackpack.php'), $label, $attr);
             $actionshtml = $this->output->box('', 'col-md-3');
             $actionshtml .= $this->output->box($backpacksettings, 'col-md-9');
-            $actionshtml = $this->output->box($actionshtml, 'row ml-5');
+            $actionshtml = $this->output->box($actionshtml, 'row ms-5');
             $externalhtml .= $actionshtml;
         }
 
@@ -685,7 +685,9 @@ class core_badges_renderer extends plugin_renderer_base {
             }
         }
 
-        return $overalldescr . $condition . html_writer::alist($items, array(), 'ul');;
+        $criteriadesc = count($items) > 1 ? html_writer::alist($items, [], 'ul') : reset($items);
+
+        return $overalldescr . $condition . $criteriadesc;
     }
 
     /**

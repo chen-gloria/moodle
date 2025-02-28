@@ -37,10 +37,10 @@
 
 {{< core_course/coursecards }}
     {{$classes}}flex-nowrap overflow-auto{{/classes}}
-    {{$coursename}} {{fullname}} {{/coursename}}
+    {{$coursename}} {{{fullname}}} {{/coursename}}
     {{$coursecategory}}
         {{#showcoursecategory}}
-            <span class="sr-only">
+            <span class="visually-hidden">
                 {{#str}}aria:coursecategory, core_course{{/str}}
             </span>
             <div class="text-truncate">{{{coursecategory}}}</div>
@@ -48,7 +48,7 @@
     {{/coursecategory}}
     {{$divider}}
         {{#showcoursecategory}}
-            <div class="pl-1 pr-1">|</div>
+            <div class="px-1">|</div>
         {{/showcoursecategory}}
     {{/divider}}
 {{/ core_course/coursecards }}

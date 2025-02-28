@@ -27,7 +27,7 @@ use test_component\courseformat\sectiondelegate as testsectiondelegate;
  * @covers     \core_courseformat\sectiondelegate
  * @coversDefaultClass \core_courseformat\sectiondelegate
  */
-class sectiondelegate_test extends \advanced_testcase {
+final class sectiondelegate_test extends \advanced_testcase {
 
     /**
      * Setup to ensure that fixtures are loaded.
@@ -74,6 +74,33 @@ class sectiondelegate_test extends \advanced_testcase {
         $this->assertNull(sectiondelegate::instance($sectioninfos[1]));
         $this->assertInstanceOf('\test_component\courseformat\sectiondelegate', sectiondelegate::instance($sectioninfos[2]));
         $this->assertNull(sectiondelegate::instance($sectioninfos[3]));
+    }
+
+    /**
+     * Test that the instance method returns null when the delegate class is disabled.
+     *
+     * @covers ::instance
+     */
+    public function test_instance_disabled(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course(['format' => 'topics', 'numsections' => 3]);
+
+        // Section 2 has an existing delegate class.
+        course_update_section(
+            $course,
+            $DB->get_record('course_sections', ['course' => $course->id, 'section' => 2]),
+            [
+                'component' => 'test_component',
+                'itemid' => testsectiondelegate::DISABLEDITEMID,
+            ]
+        );
+
+        $modinfo = get_fast_modinfo($course->id);
+        $sectioninfos = $modinfo->get_section_info_all();
+
+        $this->assertNull(sectiondelegate::instance($sectioninfos[2]));
     }
 
     /**

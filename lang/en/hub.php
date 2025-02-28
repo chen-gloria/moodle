@@ -24,6 +24,7 @@
  */
 $string['activeparticipantnumberaverage'] = 'Average number of recently active participants ({$a})';
 $string['activeusersnumber'] = 'Number of recently active users ({$a})';
+$string['aiusagestats'] = 'AI usage stats ({$a->timefrom} - {$a->timeto})';
 $string['analyticsactions'] = 'Number of actions taken on generated predictions ({$a})';
 $string['analyticsactionsnotuseful'] = 'Number of actions marking a prediction as not useful ({$a})';
 $string['analyticsenabledmodels'] = 'Number of enabled prediction models ({$a})';
@@ -63,6 +64,8 @@ $string['errorotherhubsnotsupported'] = 'This page can no longer be used for reg
 $string['errorws'] = '{$a}';
 $string['errorwstokenreset'] = '{$a}. Registration token on this site has been reset. You can now register your site again.';
 $string['errorregistrationupdate'] = 'An error occurred during registration update ({$a})';
+$string['experttipsandinsights'] = 'Expert tips and insights';
+$string['experttipsandinsightsdesc'] = 'Yes, sign me up for exclusive tips, strategies, and insights from Moodle experts and Certified Partners. Update your preferences or unsubscribe any time, as covered in our <a href="{$a}">Privacy Notice</a>.';
 $string['geolocation'] = 'Geolocation';
 $string['geolocation_help'] = 'In future we may provide location-based searching. If you want to specify the location for your course use a latitude/longitude value here (eg: -31.947884,115.871285).  One way to find this is to use Google Maps.';
 $string['imageurl'] = 'Image URL';
@@ -89,6 +92,7 @@ $string['nohubselected'] = 'No hub selected';
 $string['none'] = 'None';
 $string['operation'] = 'Actions';
 $string['participantnumberaverage'] = 'Average number of participants ({$a})';
+$string['pluginusagedata'] = 'Plugin usage data collected from: <a href="{$a->overview}">Plugins overview</a>, <a href="{$a->activities}">Manage activities</a>, and <a href="{$a->blocks}">Manage blocks</a>';
 $string['policyagreed'] = 'Privacy notice and data processing agreement';
 $string['policyagreeddesc'] = 'I agree to the <a href="{$a}" target="_blank">Privacy notice and data processing agreement</a>';
 $string['postaladdress'] = 'Postal address';
@@ -105,15 +109,15 @@ $string['registeredactiveuserdevices'] = 'Number of active users with registered
 $string['registerwithmoodleorg'] = 'Register your site';
 $string['registerwithmoodleorgupdate'] = 'Update your site registration';
 $string['registerwithmoodleorgcomplete'] = 'Complete your site registration';
-$string['registerwithmoodleorginfo'] = 'We\'d love to stay in touch and provide you with important things for your Moodle site! By registering:
+$string['registerwithmoodleorginfo'] = 'Registering your site involves periodically sending <a href="{$a->moreinformation}" class="focus-expand">anonymised site stats</a> to Moodle HQ. This helps us gain insights into how you\'re using Moodle, and make decisions about new features and plugins.
 
-* You can subscribe to receive notifications of new Moodle releases, security alerts and other important news.
-* You can access and activate mobile push notifications from your Moodle site through our free Moodle app.
-* You are contributing to our Moodle statistics of the worldwide community, which help us improve Moodle and our community sites.
-* If you wish, your site can be included in the list of registered Moodle sites in your country.';
-$string['registerwithmoodleorginfoapp'] = 'About the Moodle app';
-$string['registerwithmoodleorginfostats'] = 'Moodle statistics';
-$string['registerwithmoodleorginfosites'] = 'Other sites in my country';
+Plus, it enables you to:
+
+* Stay up to date with important updates, like security alerts and new available releases.
+* Activate mobile push notifications for the <a href="{$a->moodleapp}">Moodle App</a>.
+* Increase the visibility of your site by featuring it on the list of registered Moodle sites in your country (optional).';
+$string['registerwithmoodleorginfosites'] = 'Discover other sites in my country';
+$string['registerwithmoodleorginfostats'] = 'View global Moodle stats';
 $string['registerwithmoodleorgremove'] = 'You are about to unregister your site. You will no longer receive security alert notifications and users will not be able to receive push notifications from your site to their Moodle app. However, you will be able to re-register at any time! Are you sure you want to continue?';
 $string['registrationconfirmed'] = 'Site registration confirmed';
 $string['registrationconfirmedon'] = 'Thank you for registering your site. Registration information will be kept up to date by the \'Site registration\' scheduled task.';
@@ -128,9 +132,6 @@ $string['sendfollowinginfo_help'] = 'The following information will be sent to M
 $string['sent'] = '...finished';
 $string['siteadmin'] = 'Administrator';
 $string['siteadmin_help'] = 'The full name of the site administrator.';
-$string['sitecommnews'] = 'Moodle newsletter';
-$string['sitecommnews_help'] = 'You have the option of subscribing to our Moodle newsletter. You may unsubscribe at any time.';
-$string['sitecommnewsyes'] = 'Yes, I would like to receive the Moodle newsletter';
 $string['sitecountry'] = 'Country';
 $string['sitecountry_help'] = 'The country your organisation or institution is located in.';
 $string['sitedesc'] = 'Description';
@@ -143,6 +144,27 @@ $string['sitelang'] = 'Language';
 $string['sitelang_help'] = 'What is the main language used on your Moodle site?';
 $string['sitename'] = 'Name';
 $string['sitename_help'] = 'The name of the site will be shown on the site listing if the hub allows that.';
+$string['siteorganisationtype'] = 'Organisation type';
+$string['siteorganisationtype:charityornotforprofit'] = 'Charity or Not For Profit';
+$string['siteorganisationtype:charterschool'] = 'Charter school';
+$string['siteorganisationtype:college'] = 'College';
+$string['siteorganisationtype:collegedepartment'] = 'College department';
+$string['siteorganisationtype:commercialcourseprovider'] = 'Commercial course provider';
+$string['siteorganisationtype:companydepartment'] = 'Company department';
+$string['siteorganisationtype:companyinternal'] = 'Company internal';
+$string['siteorganisationtype:donotshare'] = 'Do not share';
+$string['siteorganisationtype:government'] = 'Government';
+$string['siteorganisationtype:highschool'] = 'High school';
+$string['siteorganisationtype:highschooldepartment'] = 'High school department';
+$string['siteorganisationtype:highschooldistrict'] = 'High school district';
+$string['siteorganisationtype:hospital'] = 'Hospital';
+$string['siteorganisationtype:independentteacher'] = 'Independent teacher';
+$string['siteorganisationtype:other'] = 'Other';
+$string['siteorganisationtype:primaryschool'] = 'Primary school';
+$string['siteorganisationtype:schooldistrict'] = 'School district';
+$string['siteorganisationtype:universitydepartment'] = 'University department';
+$string['siteorganisationtype:wholeuniversity'] = 'Whole university';
+$string['siteorganisationtype_help'] = 'Providing your organisation type will help us better understand the types of organisations using Moodle and their needs.';
 $string['sitephone'] = 'Phone';
 $string['sitephone_help'] = 'Your phone number will only be seen by the hub administrator.';
 $string['siteprivacy'] = 'Site listing';
@@ -178,5 +200,11 @@ $string['wrongtoken'] = 'The registration failed for some unknown reason (networ
 $string['sitecommnewsno'] = 'No, I do not wish to receive any emails';
 
 // Deprecated since 4.5.
+$string['registerwithmoodleorginfoapp'] = 'About the Moodle app';
 $string['siteregistrationcontact'] = 'Display contact form';
 $string['siteregistrationcontact_help'] = 'If you allow it, other people in our Moodle community (who need a login account) can contact you via a form on our Moodle community site. However, they will never be able to see your email address.';
+
+// Deprecated since 5.0.
+$string['sitecommnews'] = 'Moodle newsletter';
+$string['sitecommnews_help'] = 'You have the option of subscribing to our Moodle newsletter. You may unsubscribe at any time.';
+$string['sitecommnewsyes'] = 'Yes, I would like to receive the Moodle newsletter';

@@ -48,7 +48,7 @@ class mod_bigbluebuttonbn_generator extends \testing_module_generator {
      * @param null|array $options general options for course module.
      * @return stdClass record from module-defined table with additional field cmid
      */
-    public function create_instance($record = null, array $options = null) {
+    public function create_instance($record = null, ?array $options = null) {
         // Prior to creating the instance, make sure that the BigBlueButton module is enabled.
         $modules = \core_plugin_manager::instance()->get_plugins_of_type('mod');
         if (!$modules['bigbluebuttonbn']->is_enabled()) {
@@ -66,7 +66,8 @@ class mod_bigbluebuttonbn_generator extends \testing_module_generator {
             "timecreated" => $now,
             "timemodified" => $now,
             "presentation" => null,
-            "recordings_preview" => 0
+            "recordings_preview" => 0,
+            "grade" => 0,
         ];
 
         $record = (array) $record;
@@ -375,7 +376,7 @@ class mod_bigbluebuttonbn_generator extends \testing_module_generator {
      * @param mixed $record
      * @param array|null $options
      */
-    public function create_log($record, array $options = null) {
+    public function create_log($record, ?array $options = null) {
         $instance = instance::get_from_instanceid($record['bigbluebuttonbnid']);
 
         $record = array_merge([

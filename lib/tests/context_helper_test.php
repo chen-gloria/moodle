@@ -26,7 +26,7 @@ namespace core;
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @coversDefaultClass \core\context_helper
  */
-class context_helper_test extends \advanced_testcase {
+final class context_helper_test extends \advanced_testcase {
     /**
      * Tests covered method.
      * @covers ::parse_external_level
@@ -482,9 +482,6 @@ class context_helper_test extends \advanced_testcase {
         $page = $this->getDataGenerator()->create_module('page', array('course' => $course->id));
         $pagecontext = context\module::instance($page->cmid);
         $systemcontext = context\system::instance();
-
-        // Default is OFF.
-        $this->assertSame('0', $CFG->filternavigationwithsystemcontext);
 
         // First test passed values are returned if disabled.
         set_config('filternavigationwithsystemcontext', '0');

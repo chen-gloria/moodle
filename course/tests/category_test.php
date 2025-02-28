@@ -26,7 +26,7 @@ use core_course_category;
  * @copyright  2013 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class category_test extends \advanced_testcase {
+final class category_test extends \advanced_testcase {
 
     protected $roles;
 
@@ -1289,7 +1289,7 @@ class category_test extends \advanced_testcase {
      *
      * @return array
      */
-    public function get_nearest_editable_subcategory_provider(): array {
+    public static function get_nearest_editable_subcategory_provider(): array {
         return [
             'Hidden main category for manager. Checking create and manage' => [
                 0,
@@ -1398,6 +1398,9 @@ class category_test extends \advanced_testcase {
         // Configure a filter to apply to all content and headings.
         filter_set_global_state('multilang', TEXTFILTER_ON);
         filter_set_applies_to_strings('multilang', true);
+
+        // First test with the performance setting off.
+        set_config('filternavigationwithsystemcontext', 0);
 
         $perf = $filtermanager->get_performance_summary();
         $this->assertEquals(0, $perf[0]['contextswithfilters']);

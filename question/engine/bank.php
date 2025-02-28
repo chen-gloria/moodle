@@ -27,8 +27,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core_cache\application_cache;
+use core_cache\data_source_interface;
+use core_cache\definition;
 use core_question\local\bank\question_version_status;
 use core_question\output\question_version_info;
+
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -339,6 +343,31 @@ abstract class question_bank {
     }
 
     /**
+     * Retrieves version information for a list of questions.
+     *
+     * @param array $questionids Array of question ids.
+     * @return array An array question_bank_entries.id => version number => question.id.
+     */
+    public static function get_version_of_questions(array $questionids): array {
+        global $DB;
+
+        [$listquestionid, $params] = $DB->get_in_or_equal($questionids, SQL_PARAMS_NAMED);
+        $sql = "SELECT qv.questionid, qv.version, qv.questionbankentryid
+                  FROM {question_versions} qv
+                  JOIN {question_bank_entries} qbe ON qv.questionbankentryid = qbe.id
+                 WHERE qv.questionid $listquestionid
+              ORDER BY qv.version DESC";
+
+        $rows = $DB->get_recordset_sql($sql, $params);
+        $result = [];
+        foreach ($rows as $row) {
+            $result[$row->questionbankentryid][$row->version] = $row->questionid;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return question_finder a question finder.
      */
     public static function get_finder() {
@@ -486,7 +515,7 @@ abstract class question_bank {
  * @copyright  2009 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class question_finder implements cache_data_source {
+class question_finder implements data_source_interface {
     /** @var question_finder the singleton instance of this class. */
     protected static $questionfinder = null;
 
@@ -500,13 +529,13 @@ class question_finder implements cache_data_source {
         return self::$questionfinder;
     }
 
-    /* See cache_data_source::get_instance_for_cache. */
-    public static function get_instance_for_cache(cache_definition $definition) {
+    #[\Override]
+    public static function get_instance_for_cache(definition $definition) {
         return self::get_instance();
     }
 
     /**
-     * @return cache_application the question definition cache we are using.
+     * @return application_cache the question definition cache we are using.
      */
     protected function get_data_cache() {
         // Do not double cache here because it may break cache resetting.
@@ -672,7 +701,7 @@ class question_finder implements cache_data_source {
                 $qubaids->from_where_params() + $params + $extraparams);
     }
 
-    /* See cache_data_source::load_for_cache. */
+    #[\Override]
     public function load_for_cache($questionid) {
         global $DB;
 
@@ -696,7 +725,7 @@ class question_finder implements cache_data_source {
         return $questiondata;
     }
 
-    /* See cache_data_source::load_many_for_cache. */
+    #[\Override]
     public function load_many_for_cache(array $questionids) {
         global $DB;
 

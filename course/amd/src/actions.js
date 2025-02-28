@@ -16,6 +16,8 @@
 /**
  * Various actions on modules and sections in the editing mode - hiding, duplicating, deleting, etc.
  *
+ * TODO remove this module as part of MDL-83627.
+ *
  * @module     core_course/actions
  * @copyright  2016 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -37,6 +39,7 @@ define(
         'core/log',
         'core_courseformat/courseeditor',
         'core/event_dispatcher',
+        'core/local/inplace_editable/events',
         'core_course/events'
     ],
     function(
@@ -54,8 +57,10 @@ define(
         log,
         editor,
         EventDispatcher,
+        InplaceEditableEvents,
         CourseEvents
     ) {
+        log.debug('The course/actions module is deprecated. Please, add support_components to your course format.');
 
         // Eventually, core_courseformat/local/content/actions will handle all actions for
         // component compatible formats and the default actions.js won't be necessary anymore.
@@ -63,7 +68,7 @@ define(
         const componentActions = [
             'moveSection', 'moveCm', 'addSection', 'deleteSection', 'cmDelete', 'cmDuplicate', 'sectionHide', 'sectionShow',
             'cmHide', 'cmShow', 'cmStealth', 'sectionHighlight', 'sectionUnhighlight', 'cmMoveRight', 'cmMoveLeft',
-            'cmNoGroups', 'cmVisibleGroups', 'cmSeparateGroups',
+            'cmNoGroups', 'cmVisibleGroups', 'cmSeparateGroups', 'addModule',
         ];
 
         // The course reactive instance.
@@ -995,18 +1000,21 @@ define(
 
                 // The section and activity names are edited using inplace editable.
                 // The "update" jQuery event must be captured in order to update the course state.
-                $('body').on('updated', `${SELECTOR.SECTIONITEM} [data-inplaceeditable]`, function(e) {
-                    if (e.ajaxreturn && e.ajaxreturn.itemid) {
+                $('body').on(InplaceEditableEvents.eventTypes.elementUpdated,
+                        `${SELECTOR.SECTIONITEM} [data-inplaceeditable]`, function(e) {
+                    if (e.detail.ajaxreturn.itemid) {
                         const state = courseeditor.state;
-                        const section = state.section.get(e.ajaxreturn.itemid);
+                        const section = state.section.get(e.detail.ajaxreturn.itemid);
                         if (section !== undefined) {
-                            courseeditor.dispatch('sectionState', [e.ajaxreturn.itemid]);
+                            courseeditor.dispatch('sectionState', [e.detail.ajaxreturn.itemid]);
                         }
                     }
                 });
-                $('body').on('updated', `${SELECTOR.ACTIVITYLI} [data-inplaceeditable]`, function(e) {
-                    if (e.ajaxreturn && e.ajaxreturn.itemid) {
-                        courseeditor.dispatch('cmState', [e.ajaxreturn.itemid]);
+
+                $('body').on(InplaceEditableEvents.eventTypes.elementUpdated,
+                        `${SELECTOR.ACTIVITYLI} [data-itemtype="activityname"][data-inplaceeditable]`, function(e) {
+                    if (e.detail.ajaxreturn.itemid) {
+                        courseeditor.dispatch('cmState', [e.detail.ajaxreturn.itemid]);
                     }
                 });
 

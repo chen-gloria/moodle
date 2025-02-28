@@ -300,4 +300,259 @@ final class manager_test extends \advanced_testcase {
         $scheduledtask1 = manager::get_scheduled_task(scheduled_test_task::class);
         self::assertGreaterThan($next1->get_fail_delay(), $scheduledtask1->get_fail_delay());
     }
+
+    public function test_get_next_adhoc_task_will_respect_failed_tasks(): void {
+        // Create three tasks, one is burned on the first get_next_adhoc_task() call to build up the cache,
+        // the second will be set to failed and the third is required to make the "uniquetasksinqueue" query
+        // within the get_next_adhoc_task() function not returning a different count of remaining unique tasks.
+        manager::queue_adhoc_task(new adhoc_test_task());
+        manager::queue_adhoc_task(new adhoc_test_task());
+        manager::queue_adhoc_task(new adhoc_test_task());
+        $timestart = time();
+
+        $candidates = manager::get_candidate_adhoc_tasks($timestart, 4, null);
+        $this->assertEquals(count($candidates), 3);
+        $task1 = manager::adhoc_task_from_record(array_shift($candidates));
+        $task2 = manager::adhoc_task_from_record(array_shift($candidates));
+        $task3 = manager::adhoc_task_from_record(array_shift($candidates));
+
+        // Build up the cache by getting the first task.
+        $task = manager::get_next_adhoc_task($timestart);
+        // Release the lock by completing the task to avoid "A lock was created but not released" error if the assertion fails.
+        manager::adhoc_task_complete($task);
+        $this->assertEquals($task->get_id(), $task1->get_id());
+
+        // Make $task2 failed...
+        try {
+            // Expecting "Error: Call to a member function release() on null" as the task was not locked before.
+            manager::adhoc_task_failed($task2);
+        } catch (\Throwable $t) {
+            // Ignoring "Call to a member function release() on null" and throw anything else.
+            if ($t->getMessage() != "Call to a member function release() on null") {
+                throw $t;
+            }
+        }
+        $task = manager::get_next_adhoc_task($timestart);
+        // Release the lock by completing the task to avoid "A lock was created but not released" error if the assertion fails.
+        manager::adhoc_task_complete($task);
+        // Task $task2 should not be returned because it has failed meanwhile and
+        // therefore has its nextruntime in the future...
+        $this->assertNotEquals($task->get_id(), $task2->get_id());
+
+        // Just to make sure check that the complete queue is as expected.
+        $this->assertEquals($task->get_id(), $task3->get_id());
+        // Now the queue should be empty...
+        $task = manager::get_next_adhoc_task($timestart);
+        $this->assertNull($task);
+
+        $this->resetAfterTest();
+    }
+
+    /**
+     * Test verifying \core\task\manager behaviour for scheduled tasks when dealing with deprecated plugin types.
+     *
+     * This only verifies that existing tasks will not be listed, or returned for execution via existing APIs, like:
+     * - {@see \core\task\manager::get_all_scheduled_tasks}
+     * - {@see \core\task\manager::get_next_scheduled_task}
+     *
+     * I.e. Nothing prevents task->execute() from running if called directly.
+     *
+     * @return void
+     */
+    public function test_scheduled_tasks_deprecated_plugintype(): void {
+        $this->resetAfterTest();
+        global $DB, $CFG;
+
+        $fakepluginroot = $CFG->libdir . '/tests/fixtures/fakeplugins/fake/fullfeatured';
+        require_once($fakepluginroot . '/classes/plugininfo/fullsubtype.php');
+        require_once($fakepluginroot . '/classes/plugininfo/fulldeprecatedsubtype.php');
+        require_once($fakepluginroot . '/fullsubtype/example/classes/task/scheduled_test.php');
+        require_once($fakepluginroot . '/fulldeprecatedsubtype/test/classes/task/scheduled_test.php');
+
+        // Inject stub plugininfo instances into a stub plugin manager, then inject that into the static cache via reflection.
+        // When the manager code calls core_plugin_manager::instance(), it'll get back the stub.
+        $stubavailableplugininfo = $this->createStub(\fake_fullfeatured\plugininfo\fullsubtype::class);
+        $stubavailableplugininfo->method('is_deprecated')->willReturn(false);
+        $stubavailableplugininfo->component = "fullsubtype_example";
+        $stubdeprecatedplugininfo = $this->createStub(\fake_fullfeatured\plugininfo\fulldeprecatedsubtype::class);
+        $stubdeprecatedplugininfo->method('is_deprecated')->willReturn(true);
+        $stubdeprecatedplugininfo->component = "fulldeprecatedsubtype_test";
+
+        $stubpluginman = $this->createStub(\core_plugin_manager::class);
+        $stubpluginman
+            ->method('get_plugin_info')
+            ->will($this->returnValueMap([
+                ['fullsubtype_example', $stubavailableplugininfo],
+                ['fulldeprecatedsubtype_test', $stubdeprecatedplugininfo],
+            ]));
+
+        $pluginman = new \ReflectionClass(\core_plugin_manager::class);
+        $pluginman->setStaticPropertyValue('singletoninstance', $stubpluginman);
+
+        $DB->delete_records('task_scheduled');
+
+        // Non-deprecated plugin type: is listed and is returned during scheduling.
+        $scheduledtask = new \fullsubtype_example\task\scheduled_test();
+        $DB->insert_record('task_scheduled', \core\task\manager::record_from_scheduled_task($scheduledtask));
+        $records = $DB->get_records('task_scheduled');
+        $this->assertCount(1, $records);
+
+        $this->assertInstanceOf(
+            \fullsubtype_example\task\scheduled_test::class,
+            \core\task\manager::get_all_scheduled_tasks()[0]
+        );
+        $now = time();
+        $task = \core\task\manager::get_next_scheduled_task($now);
+        $this->assertInstanceOf(\fullsubtype_example\task\scheduled_test::class, $task);
+        manager::scheduled_task_complete($task);
+
+        // Deprecated plugin type: isn't listed and isn't returned during scheduling.
+        $DB->delete_records('task_scheduled');
+        $scheduledtask = new \fulldeprecatedsubtype_test\task\scheduled_test();
+        $DB->insert_record('task_scheduled', \core\task\manager::record_from_scheduled_task($scheduledtask));
+        $records = $DB->get_records('task_scheduled');
+        $this->assertCount(1, $records);
+
+        $this->assertEmpty(\core\task\manager::get_all_scheduled_tasks());
+        $this->assertNull(\core\task\manager::get_next_scheduled_task($now));
+
+        // Task can still be executed directly.
+        $this->expectExceptionMessage('task->execute() called');
+        $scheduledtask->execute();
+    }
+
+    /**
+     * Test verifying \core\task\manager behaviour for adhoc tasks when dealing with deprecated plugin types.
+     *
+     * This only verifies that new tasks cannot be queued via:
+     * - {@see \core\task\manager::queue_adhoc_task}
+     * - {@see \core\task\manager::get_next_adhoc_task()}
+     *
+     * I.e. Nothing prevents task->execute() from running if called directly.
+     *
+     * @return void
+     */
+    public function test_queue_adhoc_task_deprecated_plugintype(): void {
+        $this->resetAfterTest();
+        global $DB, $CFG;
+
+        $fakepluginroot = $CFG->libdir . '/tests/fixtures/fakeplugins/fake/fullfeatured';
+        require_once($fakepluginroot . '/classes/plugininfo/fullsubtype.php');
+        require_once($fakepluginroot . '/classes/plugininfo/fulldeprecatedsubtype.php');
+        require_once($fakepluginroot . '/classes/plugininfo/fulldeletedsubtype.php');
+        require_once($fakepluginroot . '/fullsubtype/example/classes/task/adhoc_test.php');
+        require_once($fakepluginroot . '/fulldeprecatedsubtype/test/classes/task/adhoc_test.php');
+        require_once($fakepluginroot . '/fulldeletedsubtype/demo/classes/task/adhoc_test.php');
+
+        // Inject stub plugininfo instances into a stub plugin manager, then inject that into the static cache via reflection.
+        // When the manager code calls core_plugin_manager::instance(), it'll get back the stub.
+        $stubavailableplugininfo = $this->createStub(\fake_fullfeatured\plugininfo\fullsubtype::class);
+        $stubavailableplugininfo->method('is_deprecated')->willReturn(false);
+        $stubavailableplugininfo->method('is_deleted')->willReturn(false);
+        $stubavailableplugininfo->component = "fullsubtype_example";
+        $stubdeprecatedplugininfo = $this->createStub(\fake_fullfeatured\plugininfo\fulldeprecatedsubtype::class);
+        $stubdeprecatedplugininfo->method('is_deprecated')->willReturn(true);
+        $stubdeprecatedplugininfo->method('is_deleted')->willReturn(false);
+        $stubdeprecatedplugininfo->component = "fulldeprecatedsubtype_test";
+        $stubdeletedplugininfo = $this->createStub(\fake_fullfeatured\plugininfo\fulldeletedsubtype::class);
+        $stubdeletedplugininfo->method('is_deprecated')->willReturn(false);
+        $stubdeletedplugininfo->method('is_deleted')->willReturn(true);
+        $stubdeletedplugininfo->component = "fulldeletedsubtype_demo";
+        $stubpluginman = $this->createStub(\core_plugin_manager::class);
+        $stubpluginman->method('get_plugin_info')
+            ->will($this->returnValueMap([
+                ['fullsubtype_example', $stubavailableplugininfo],
+                ['fulldeprecatedsubtype_test', $stubdeprecatedplugininfo],
+                ['fulldeletedsubtype_demo', $stubdeletedplugininfo],
+            ]));
+        $pluginmanrc = new \ReflectionClass(\core_plugin_manager::class);
+        $pluginmanrc->setStaticPropertyValue('singletoninstance', $stubpluginman);
+
+        $task1 = new \fullsubtype_example\task\adhoc_test(); // Available plugin type.
+        $task2 = new \fulldeprecatedsubtype_test\task\adhoc_test(); // Deprecated plugin type.
+        $task3 = new \fulldeletedsubtype_demo\task\adhoc_test(); // Deleted plugin type.
+
+        $DB->delete_records('task_adhoc');
+
+        // Task from a non-deprecated plugin type can be queued.
+        $this->assertIsInt(manager::queue_adhoc_task($task1));
+        $now = time();
+        $classname = get_class($task1);
+        $taskfromqueue = manager::get_next_adhoc_task($now, true, $classname);
+        $this->assertNotNull($taskfromqueue);
+        $taskfromqueue->execute();
+        manager::adhoc_task_complete($taskfromqueue);
+
+        // Task from a deprecated plugin type cannot be queued.
+        $this->assertTrue(\core_plugin_manager::instance()->get_plugin_info('fulldeprecatedsubtype_test')->is_deprecated());
+        $this->assertFalse(manager::queue_adhoc_task($task2));
+        $classname = get_class($task2);
+        $this->assertNull(manager::get_next_adhoc_task($now, true, $classname));
+
+        // Task from a deleted plugin type cannot be queued.
+        $this->assertTrue(\core_plugin_manager::instance()->get_plugin_info('fulldeletedsubtype_demo')->is_deleted());
+        $this->assertFalse(manager::queue_adhoc_task($task3));
+        $classname = get_class($task3);
+        $this->assertNull(manager::get_next_adhoc_task($now, true, $classname));
+    }
+
+    /**
+     * Test verifying \core\task\manager can still return and run adhoc tasks queued prior to plugin deprecation.
+     *
+     *  This only verifies that existing tasks can be fetched and run via:
+     *  - {@see \core\task\manager::get_next_adhoc_task()}
+     *
+     * @return void
+     */
+    public function test_run_existing_adhoc_task_deprecated_plugintype(): void {
+        $this->resetAfterTest();
+        global $DB, $CFG;
+
+        $fakepluginroot = $CFG->libdir . '/tests/fixtures/fakeplugins/fake/fullfeatured';
+        require_once($fakepluginroot . '/classes/plugininfo/fullsubtype.php');
+        require_once($fakepluginroot . '/fullsubtype/example/classes/task/adhoc_test.php');
+
+        // Inject stub plugininfo instances into a stub plugin manager, then inject that into the static cache via reflection.
+        // When the task code calls core_plugin_manager::instance(), it'll get back the stub.
+        $stubavailableplugininfo = $this->createStub(\fake_fullfeatured\plugininfo\fullsubtype::class);
+        $stubavailableplugininfo->method('is_deprecated')->willReturn(false);
+        $stubavailableplugininfo->component = "fullsubtype_example";
+        $stubpluginman = $this->createStub(\core_plugin_manager::class);
+        $stubpluginman
+            ->method('get_plugin_info')
+            ->will($this->returnValueMap([
+                ['fullsubtype_example', $stubavailableplugininfo],
+            ]));
+        $pluginmanrc = new \ReflectionClass(\core_plugin_manager::class);
+        $pluginmanrc->setStaticPropertyValue('singletoninstance', $stubpluginman);
+
+        $task1 = new \fullsubtype_example\task\adhoc_test(); // An available plugin.
+
+        $DB->delete_records('task_adhoc');
+
+        // Queue the task for the available plugin.
+        $this->assertIsInt(manager::queue_adhoc_task($task1));
+        $this->assertEquals(1, $DB->count_records('task_adhoc'));
+
+        // Now, deprecate the plugin type by redefining the stubs and reinjecting into the stub plugin manager.
+        $stubdeprecatedplugininfo = $this->createStub(\fake_fullfeatured\plugininfo\fullsubtype::class);
+        $stubdeprecatedplugininfo->method('is_deprecated')->willReturn(true);
+        $stubdeprecatedplugininfo->component = "fullsubtype_example";
+        $stubpluginman = $this->createStub(\core_plugin_manager::class);
+        $stubpluginman
+            ->method('get_plugin_info')
+            ->will($this->returnValueMap([
+                ['fullsubtype_example', $stubdeprecatedplugininfo],
+            ]));
+        $pluginmanrc->setStaticPropertyValue('singletoninstance', $stubpluginman);
+
+        // Assert prior-queued tasks can be fetched and run.
+        $this->assertTrue(\core_plugin_manager::instance()->get_plugin_info('fullsubtype_example')->is_deprecated());
+        $classname = get_class($task1);
+        $now = time();
+        $taskfromqueue = manager::get_next_adhoc_task($now, true, $classname);
+        $this->assertNotNull($taskfromqueue);
+        $taskfromqueue->execute();
+        manager::adhoc_task_complete($taskfromqueue);
+    }
 }

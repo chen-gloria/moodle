@@ -24,7 +24,7 @@ namespace tool_brickfield\local\tool;
  * @author     Jay Churchward (jay.churchward@poetopensource.org)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class printable_test extends \advanced_testcase {
+final class printable_test extends \advanced_testcase {
 
     /**
      * Test tool name.
@@ -100,7 +100,7 @@ class printable_test extends \advanced_testcase {
         $object = new printable();
         $object->set_filter($filter);
         $output = $object->get_output();
-        $this->assertStringContainsString('<i class="icon fa fa-tachometer fa-fw "  title="Total activities" '.
+        $this->assertStringContainsString('<i class="icon fa fa-trophy fa-fw "  title="Total activities" '.
             'role="img" aria-label="Total activities">', $output);
     }
 }

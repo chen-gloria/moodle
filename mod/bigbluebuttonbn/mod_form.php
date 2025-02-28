@@ -94,7 +94,8 @@ class mod_bigbluebuttonbn_mod_form extends moodleform_mod {
         $this->bigbluebuttonbn_mform_add_block_schedule($mform, $this->current);
         // Now add subplugins form elements.
         $this->add_subplugins_elements();
-
+        // Add standard grading elements.
+        $this->standard_grading_coursemodule_elements();
         // Add standard elements, common to all modules.
         $this->standard_coursemodule_elements();
         // Add standard buttons, common to all modules.
@@ -598,19 +599,30 @@ class mod_bigbluebuttonbn_mod_form extends moodleform_mod {
      * @return void
      */
     private function bigbluebuttonbn_mform_add_block_preuploads(MoodleQuickForm &$mform, array $cfg): void {
-        if ($cfg['preuploadpresentation_editable']) {
+        $bigbluebuttonbn = get_config('mod_bigbluebuttonbn');
+        if ($cfg['preuploadpresentation_editable'] || $bigbluebuttonbn->showpresentation_editable) {
             $mform->addElement('header', 'preuploadpresentation',
                 get_string('mod_form_block_presentation', 'bigbluebuttonbn'));
             $mform->setExpanded('preuploadpresentation');
-            $filemanageroptions = [];
-            $filemanageroptions['accepted_types'] = '*';
-            $filemanageroptions['maxbytes'] = 0;
-            $filemanageroptions['subdirs'] = 0;
-            $filemanageroptions['maxfiles'] = 1;
-            $filemanageroptions['mainfile'] = true;
-            $mform->addElement('filemanager', 'presentation', get_string('selectfiles'),
-                null, $filemanageroptions);
+            if ($cfg['preuploadpresentation_editable']) {
+                $filemanageroptions = [];
+                $filemanageroptions['accepted_types'] = '*';
+                $filemanageroptions['maxbytes'] = 0;
+                $filemanageroptions['subdirs'] = 0;
+                $filemanageroptions['maxfiles'] = 1;
+                $filemanageroptions['mainfile'] = true;
+                $mform->addElement('filemanager', 'presentation', get_string('selectfiles'),
+                    null, $filemanageroptions);
+            }
+            if ($bigbluebuttonbn->showpresentation_editable) {
+                $mform->addElement('advcheckbox', 'showpresentation',
+                get_string('mod_form_field_showpresentation', 'bigbluebuttonbn'));
+                $mform->setDefault('showpresentation', $bigbluebuttonbn->showpresentation_default);
+            } else {
+                $mform->addElement('hidden', 'showpresentation', 0);
+            }
         }
+        $mform->setType('showpresentation', PARAM_BOOL);
     }
 
     /**

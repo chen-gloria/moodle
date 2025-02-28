@@ -371,6 +371,8 @@ function forum_supports($feature) {
         case FEATURE_PLAGIARISM:              return true;
         case FEATURE_ADVANCED_GRADING:        return true;
         case FEATURE_MOD_PURPOSE:             return MOD_PURPOSE_COLLABORATION;
+        case FEATURE_CAN_UNINSTALL:
+            return false;
 
         default: return null;
     }
@@ -1702,6 +1704,9 @@ function forum_get_discussions($cm, $forumsort="", $fullpost=true, $unused=-1, $
     if (empty($forumsort)) {
         $forumsort = forum_get_default_sort_order();
     }
+    if (!str_contains($forumsort, 'id')) {
+        $forumsort .= ', d.id DESC';
+    }
     if (empty($fullpost)) {
         $postdata = "p.id, p.subject, p.modified, p.discussion, p.userid, p.created";
     } else {
@@ -1737,7 +1742,7 @@ function forum_get_discussions($cm, $forumsort="", $fullpost=true, $unused=-1, $
                    $umtable
              WHERE d.forum = ? AND p.parent = 0
                    $timelimit $groupselect $updatedsincesql
-          ORDER BY $forumsort, d.id DESC";
+          ORDER BY $forumsort";
 
     return $DB->get_records_sql($sql, $params, $limitfrom, $limitnum);
 }
@@ -2145,7 +2150,7 @@ function forum_get_course_forum($courseid, $type) {
         echo $OUTPUT->notification("Could not add a new course module to the course '" . $courseid . "'");
         return false;
     }
-    $sectionid = course_add_cm_to_section($courseid, $mod->coursemodule, 0);
+    $sectionid = course_add_cm_to_section($courseid, $mod->coursemodule, 0, null, 'forum');
     return $DB->get_record("forum", array("id" => "$forum->id"));
 }
 
@@ -2581,7 +2586,14 @@ function forum_print_attachments($post, $cm, $type) {
         foreach ($files as $file) {
             $filename = $file->get_filename();
             $mimetype = $file->get_mimetype();
-            $iconimage = $OUTPUT->pix_icon(file_file_icon($file), get_mimetype_description($file), 'moodle', array('class' => 'icon'));
+            $iconimage = $OUTPUT->pix_icon(file_file_icon($file),
+                    get_mimetype_description($file),
+                    'moodle',
+                    [
+                            'class' => 'icon',
+                            'style' => 'max-width: 24px; max-height: 24px; vertical-align: middle;',
+                    ]
+            );
             $path = file_encode_url($CFG->wwwroot.'/pluginfile.php', '/'.$context->id.'/mod_forum/attachment/'.$post->id.'/'.$filename);
 
             if ($type == 'html') {
@@ -4824,7 +4836,7 @@ function forum_discussion_update_last_post($discussionid) {
     $sql = "SELECT id, userid, modified
               FROM {forum_posts}
              WHERE discussion=?
-             ORDER BY modified DESC";
+             ORDER BY modified DESC, id DESC";
 
 // Lets go find the last post
     if (($lastposts = $DB->get_records_sql($sql, array($discussionid), 0, 1))) {
@@ -5633,7 +5645,7 @@ function forum_get_courses_user_posted_in($user, $discussionsonly = false, $incl
  * @param int $limitnum The number of records to return
  * @return array An array of forums the user has posted within in the provided courses
  */
-function forum_get_forums_user_posted_in($user, array $courseids = null, $discussionsonly = false, $limitfrom = null, $limitnum = null) {
+function forum_get_forums_user_posted_in($user, ?array $courseids = null, $discussionsonly = false, $limitfrom = null, $limitnum = null) {
     global $DB;
 
     if (!is_null($courseids)) {
@@ -5920,7 +5932,7 @@ function forum_get_posts_by_user($user, array $courses, $musthaveaccess = false,
 
     // Prepare SQL to both count and search.
     // We alias user.id to useridx because we forum_posts already has a userid field and not aliasing this would break
-    // oracle and mssql.
+    // mssql.
     $userfieldsapi = \core_user\fields::for_userpic();
     $userfields = $userfieldsapi->get_sql('u', false, '', 'useridx', false)->selects;
     $countsql = 'SELECT COUNT(*) ';
@@ -6397,11 +6409,11 @@ function forum_can_create_attachment($forum, $context) {
  */
 function mod_forum_get_fontawesome_icon_map() {
     return [
-        'mod_forum:i/pinned' => 'fa-map-pin',
+        'mod_forum:i/pinned' => 'fa-thumbtack',
         'mod_forum:t/selected' => 'fa-check',
-        'mod_forum:t/subscribed' => 'fa-envelope-o',
-        'mod_forum:t/unsubscribed' => 'fa-envelope-open-o',
         'mod_forum:t/star' => 'fa-star',
+        'mod_forum:t/subscribed' => 'fa-regular fa-envelope',
+        'mod_forum:t/unsubscribed' => 'fa-regular fa-envelope-open',
     ];
 }
 
@@ -6911,4 +6923,51 @@ function forum_refresh_events(int $courseid, stdClass $instance, stdClass $cm): 
     require_once($CFG->dirroot . '/mod/forum/locallib.php');
 
     forum_update_calendar($instance, $cm->id);
+}
+
+/**
+ * Callback adds navigation to view user posts if the navadduserpostslinks config is on.
+ *
+ * @param navigation_node $usernode User node within navigation
+ * @param stdClass $user User object
+ * @param \core\context\user $usercontext User context
+ * @param stdClass $course Current course
+ * @param \core\context $coursecontext Course context
+ */
+function mod_forum_extend_navigation_user(
+    navigation_node $usernode,
+    stdClass $user,
+    \core\context\user $usercontext,
+    stdClass $course,
+    \core\context $coursecontext,
+): void {
+    global $CFG;
+    if (!empty($CFG->navadduserpostslinks) && $coursecontext instanceof \core\context\system) {
+        $baseargs = ['id' => $user->id];
+
+        // Add nodes for forum posts and discussions if the user can view either or both
+        // There are no capability checks here as the content of the page is based
+        // purely on the forums the current user has access too.
+        $forumtab = \navigation_node::create(get_string('forumposts', 'forum'));
+        $forumtab->add(
+            get_string('posts', 'forum'),
+            new moodle_url('/mod/forum/user.php', $baseargs),
+        );
+        $forumtab->add(
+            get_string('discussions', 'forum'),
+            new moodle_url('/mod/forum/user.php',
+                array_merge($baseargs, ['mode' => 'discussions']),
+            ),
+        );
+
+        // We add the forum link either immediately after the 'viewuserdetails' link, or as the first item in the list.
+        foreach ($usernode->children as $child) {
+            if ($child->key === 'viewuserdetails') {
+                continue;
+            }
+            $addbefore = $child;
+            break;
+        }
+        $usernode->add_node($forumtab, $addbefore->key);
+    }
 }

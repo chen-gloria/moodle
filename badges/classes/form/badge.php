@@ -38,7 +38,7 @@ class badge extends moodleform {
      * Defines the form
      */
     public function definition() {
-        global $CFG;
+        global $CFG, $SITE;
 
         $mform = $this->_form;
         $badge = (isset($this->_customdata['badge'])) ? $this->_customdata['badge'] : false;
@@ -83,43 +83,33 @@ class badge extends moodleform {
             $mform->insertElementBefore($currentimage, 'image');
         }
         $mform->addHelpButton('image', 'badgeimage', 'badges');
-        $mform->addElement('text', 'imageauthorname', get_string('imageauthorname', 'badges'), ['size' => '70']);
-        $mform->setType('imageauthorname', PARAM_TEXT);
-        $mform->addHelpButton('imageauthorname', 'imageauthorname', 'badges');
-        $mform->addElement('text', 'imageauthoremail', get_string('imageauthoremail', 'badges'), ['size' => '70']);
-        $mform->setType('imageauthoremail', PARAM_TEXT);
-        $mform->addHelpButton('imageauthoremail', 'imageauthoremail', 'badges');
-        $mform->addElement('text', 'imageauthorurl', get_string('imageauthorurl', 'badges'), ['size' => '70']);
-        $mform->setType('imageauthorurl', PARAM_URL);
-        $mform->addHelpButton('imageauthorurl', 'imageauthorurl', 'badges');
         $mform->addElement('text', 'imagecaption', get_string('imagecaption', 'badges'), ['size' => '70']);
         $mform->setType('imagecaption', PARAM_TEXT);
         $mform->addHelpButton('imagecaption', 'imagecaption', 'badges');
         $mform->addElement('tags', 'tags', get_string('tags', 'badges'), ['itemtype' => 'badge', 'component' => 'core_badges']);
 
-        if (badges_open_badges_backpack_api() == OPEN_BADGES_V1) {
-            $mform->addElement('header', 'issuerdetails', get_string('issuerdetails', 'badges'));
+        $mform->addElement('header', 'issuerdetails', get_string('issuerdetails', 'badges'));
 
-            $mform->addElement('text', 'issuername', get_string('name'), ['size' => '70']);
-            $mform->setType('issuername', PARAM_NOTAGS);
-            $mform->addRule('issuername', null, 'required');
-            if (isset($CFG->badges_defaultissuername)) {
-                $mform->setDefault('issuername', $CFG->badges_defaultissuername);
-            }
-            $mform->addHelpButton('issuername', 'issuername', 'badges');
+        $mform->addElement('text', 'issuername', get_string('issuername', 'badges'), ['size' => '70']);
+        $mform->setType('issuername', PARAM_NOTAGS);
+        $mform->addRule('issuername', null, 'required');
+        $site = get_site();
+        $issuername = $CFG->badges_defaultissuername ?: $site->fullname;
+        $mform->setDefault('issuername', $issuername);
+        $mform->addHelpButton('issuername', 'issuername', 'badges');
 
-            $mform->addElement('text', 'issuercontact', get_string('contact', 'badges'), ['size' => '70']);
-            if (isset($CFG->badges_defaultissuercontact)) {
-                $mform->setDefault('issuercontact', $CFG->badges_defaultissuercontact);
-            }
-            $mform->setType('issuercontact', PARAM_RAW);
-            $mform->addHelpButton('issuercontact', 'contact', 'badges');
-            // Set issuer URL.
-            // Have to parse URL because badge issuer origin cannot be a subfolder in wwwroot.
-            $url = parse_url($CFG->wwwroot);
-            $mform->addElement('hidden', 'issuerurl', $url['scheme'] . '://' . $url['host']);
-            $mform->setType('issuerurl', PARAM_URL);
+        $mform->addElement('text', 'issuercontact', get_string('contact', 'badges'), ['size' => '70']);
+        if (isset($CFG->badges_defaultissuercontact)) {
+            $mform->setDefault('issuercontact', $CFG->badges_defaultissuercontact);
         }
+        $mform->setType('issuercontact', PARAM_RAW);
+        $mform->addRule('issuercontact', null, 'email');
+        $mform->addHelpButton('issuercontact', 'contact', 'badges');
+        // Set issuer URL.
+        // Have to parse URL because badge issuer origin cannot be a subfolder in wwwroot.
+        $url = parse_url($CFG->wwwroot);
+        $mform->addElement('hidden', 'issuerurl', $url['scheme'] . '://' . $url['host']);
+        $mform->setType('issuerurl', PARAM_URL);
 
         $mform->addElement('header', 'issuancedetails', get_string('issuancedetails', 'badges'));
 
@@ -211,26 +201,12 @@ class badge extends moodleform {
 
         $errors = parent::validation($data, $files);
 
-        if (badges_open_badges_backpack_api() == OPEN_BADGES_V1) {
-            if (!empty($data['issuercontact']) && !validate_email($data['issuercontact'])) {
-                $errors['issuercontact'] = get_string('invalidemail');
-            }
-        }
-
         if ($data['expiry'] == 2 && $data['expireperiod'] <= 0) {
             $errors['expirydategr'] = get_string('error:invalidexpireperiod', 'badges');
         }
 
         if ($data['expiry'] == 1 && $data['expiredate'] <= time()) {
             $errors['expirydategr'] = get_string('error:invalidexpiredate', 'badges');
-        }
-
-        if ($data['imageauthoremail'] && !validate_email($data['imageauthoremail'])) {
-            $errors['imageauthoremail'] = get_string('invalidemail');
-        }
-
-        if ($data['imageauthorurl'] && !preg_match('@^https?://.+@', $data['imageauthorurl'])) {
-            $errors['imageauthorurl'] = get_string('invalidurl', 'badges');
         }
 
         return $errors;

@@ -157,7 +157,7 @@
             margin-right: 28px;
             font-style: italic;
             font-weight: bold;
-            color: #{theme-color-level('success', 2)};
+            color: #{shift-color($success, 20%)};
 
             input {
                 margin-bottom: 0;
@@ -490,14 +490,6 @@
                                     display: flex;
                                     min-height: 30px;
                                     align-items: center;
-
-                                    .form-check {
-                                        padding: 0;
-
-                                        .itemselect {
-                                            margin-right: 5px;
-                                        }
-                                    }
 
                                     a {
                                         &.toggle-category {

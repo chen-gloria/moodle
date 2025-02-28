@@ -75,9 +75,7 @@ $string['alternativefullnameformat_desc'] = 'This defines how names are shown to
 $string['always'] = 'Always';
 $string['appearance'] = 'Appearance';
 $string['aspellpath'] = 'Path to aspell';
-$string['asyncbackupdisabled'] = 'Your site is currently configured to use synchronous backups. Asynchronous backups provide a better user experience.
-Asynchronous backups will be enabled for all sites from Moodle LMS 4.5 LTS.
-Synchronous backups will be removed from Moodle LMS the version after 4.5 LTS';
+$string['asyncbackupdisabled'] = 'Your site is currently configured to use synchronous backups. Asynchronous backups provide a better user experience, allowing users to do other operations while a backup or restore is in progress. Asynchronous backups are enabled for all sites from Moodle 4.5 LTS. Synchronous backups will be removed from Moodle LMS the version after 4.5 LTS.';
 $string['authentication'] = 'Authentication';
 $string['authpreventaccountcreation'] = 'Prevent account creation when authenticating';
 $string['authpreventaccountcreation_help'] = 'When a user authenticates, an account on the site is automatically created if it doesn\'t yet exist. If an external database, such as LDAP, is used for authentication, but you wish to restrict access to the site to users with an existing account only, then this option should be enabled. New accounts will need to be created manually or via the upload users feature. Note that this setting doesn\'t apply to MNet authentication.';
@@ -343,7 +341,7 @@ $string['configperfdebug'] = 'If you turn this on, performance info will be prin
 $string['configprofileroles'] = 'Roles that are listed in user profiles and on the participants page.';
 $string['configprofilesforenrolledusersonly'] = 'To prevent misuse by spammers, profile descriptions of users who are not yet enrolled in any course are hidden. New users must enrol in at least one course before they can add a profile description.';
 $string['configprotectusernames'] = 'If enabled, the forgotten password form will not display any hints allowing account usernames or email addresses to be guessed.';
-$string['configproxybypass'] = 'Comma separated list of (partial) hostnames or IPs that should bypass proxy (e.g., 192.168., .mydomain.com)';
+$string['configproxybypass'] = 'List of (partial) hostnames or IP addresses that should bypass the proxy. Separate items by a comma and no spaces, for example 192.168.0.0/16,*.mydomain.com.';
 $string['configproxyhost'] = 'If this <b>server</b> needs to use a proxy computer (eg a firewall) to access the Internet, then provide the proxy hostname here.  Otherwise leave it blank.';
 $string['configproxypassword'] = 'Password needed to access internet through proxy if required, empty if none (PHP cURL extension required).';
 $string['configproxyport'] = 'If this server needs to use a proxy computer, then provide the proxy port here.';
@@ -447,7 +445,7 @@ $string['courselistshortnames_desc'] = 'If enabled, course short names will be d
 $string['coursemgmt'] = 'Manage courses and categories';
 $string['courseoverview'] = 'Course overview';
 $string['courserequestnotify'] = 'Course request notification';
-$string['courserequestnotifyemail'] = '{$a->user} requested a new course <a href="{$a->link}">{$a->link}</a>';
+$string['courserequestnotifyemail'] = 'User {$a->user} requested a new course at <a href="{$a->link}">{$a->link}</a>.';
 $string['courserequests'] = 'Course requests';
 $string['courserequestspending'] = 'Pending course requests';
 $string['courses'] = 'Courses';
@@ -517,6 +515,7 @@ $string['defaulthomepage'] = 'Start page for users';
 $string['defaultrequestcategory'] = 'Default category for course requests';
 $string['defaultsettinginfo'] = 'Default: {$a}';
 $string['defaultuserroleid'] = 'Default role for all users';
+$string['deletedplugintypesdetected'] = 'A deleted plugin, \'{$a}\', was detected. This should have been migrated/uninstalled during the deprecation window. This is now an unsupported plugin type and installation/upgrade cannot continue until this plugin is uninstalled.';
 $string['deleteincompleteusers'] = 'Delete incomplete users after';
 $string['deleteunconfirmed'] = 'Delete not fully setup users after';
 $string['deleteuser'] = 'Delete user';
@@ -762,7 +761,6 @@ $string['choosefiletoedit'] = 'Choose file to edit';
 $string['h5pgetcontenttypestask'] = 'Download available H5P content types from h5p.org';
 $string['taskh5pcleanup'] = 'Unused H5P files cleanup';
 $string['iconvrequired'] = 'Installing ICONV extension is required.';
-$string['igbinary322buggyversion'] = 'The php-igbinary extension installed on the site can lead to problems when running with PHP 7.2. You are recommended to either upgrade to php-igbinary 3.2.5 or later, or alternatively to upgrade to PHP 7.3 or later.';
 $string['ignore'] = 'Ignore';
 $string['includemoduleuserdata'] = 'Include module user data';
 $string['incompatibleblocks'] = 'Incompatible blocks';
@@ -815,7 +813,9 @@ $string['locationsettings'] = 'Location settings';
 $string['locked'] = 'Locked';
 $string['lockoutduration'] = 'Account lockout duration';
 $string['lockoutduration_desc'] = 'Locked out account is automatically unlocked after this duration.';
-$string['lockoutemailbody'] = 'Your account with username {$a->username} on server \'{$a->sitename}\'
+$string['lockoutemailbody'] = 'Hi {$a->firstname},
+
+Your account with username {$a->username} on server \'{$a->sitename}\'
 was locked out after multiple invalid login attempts.
 
 To unlock the account immediately go to the following address
@@ -916,6 +916,8 @@ $string['minpasswordnonalphanum'] = 'Non-alphanumeric characters';
 $string['minpasswordupper'] = 'Uppercase letters';
 $string['misc'] = 'Miscellaneous';
 $string['mlbackendsettings'] = 'Machine learning backend settings';
+$string['navfilter'] = 'Filter custom menu';
+$string['navfilter_desc'] = 'Process the custom menu through Moodle filters that are set to apply to <strong>Content and Headings</strong>. Useful for enabling dynamic custom menu items.';
 $string['mnetrestore_extusers'] = '<strong>Note:</strong> This backup file contains remote Moodle Network user accounts which will be restored as part of the process.';
 $string['mnetrestore_extusers_admin'] = '<strong>Note:</strong> This backup file seems to come from a different Moodle installation and contains remote Moodle Network user accounts. The restore process will try to match the Moodle Network hosts for all created users. Those not matching will be automatically switched to internal authentication (instead of mnet one). The restore log will inform you about that.';
 $string['mnetrestore_extusers_mismatch'] = '<strong>Note:</strong> This backup file apparently originates from a different Moodle installation and contains remote Moodle Network user accounts that may fail to restore. This operation is unsupported. If you are certain that it was created on this Moodle installation, or you can ensure that all the needed Moodle Network Hosts are configured, you may want to still try the restore.';
@@ -984,7 +986,6 @@ $string['opensslrecommended'] = 'Installing the optional OpenSSL library is high
 $string['opensslrequired'] = 'The OpenSSL PHP extension is now required by Moodle to provide stronger cryptographic services.';
 $string['opentowebcrawlers'] = 'Open to search engines';
 $string['optionalmaintenancemessage'] = 'Optional maintenance message';
-$string['oracledatabaseinuse'] = 'Oracle DB support is to be removed. Moodle 4.5 will be the last version with Oracle DB support. For details, see the announcement on moodle.org <a href="https://moodle.org/mod/forum/discuss.php?d=456122">Oracle database support in LMS deprecation</a>.';
 $string['order1'] = 'First';
 $string['order2'] = 'Second';
 $string['order3'] = 'Third';
@@ -1140,13 +1141,8 @@ $string['recaptchaprivatekey'] = 'ReCAPTCHA secret key';
 $string['recaptchapublickey'] = 'ReCAPTCHA site key';
 $string['register'] = 'Register your site';
 $string['registration'] = 'Registration';
-$string['registration_help'] = 'By registering:
-
-* You will receive security alerts
-* You can activate mobile app push notifications from your site
-* You are contributing to our Moodle statistics of the worldwide community';
-$string['registrationwarning'] = 'Your site is not yet registered.';
-$string['registrationwarningcontactadmin'] = 'Your site is not yet registered. Please notify your administrator.';
+$string['registrationwarning'] = 'Don\'t miss out on important updates and security alerts.';
+$string['registrationwarningcontactadmin'] = 'This site is not registered. Please ask your administrator to register the site so they don\'t miss out on important updates.';
 $string['releasenoteslink'] = 'For information about this version of Moodle, please see the online <a target="_blank" href="{$a}">Release Notes</a>';
 $string['rememberuserlicensepref'] = 'Remember user licence preference';
 $string['rememberuserlicensepref_help'] = 'If enabled, the last licence selected by the user is preselected when uploading a file in the file picker. Otherwise, the default site licence is preselected.';
@@ -1342,6 +1338,7 @@ $string['stickyblockscourseview'] = 'Course page';
 $string['stickyblocksduplicatenotice'] = 'If any block you add here is already present in a particular page, it will result in a duplicate.<br />Only the pinned block will be non-editable, the duplicate will still be editable.';
 $string['stickyblocksmymoodle'] = 'My Moodle';
 $string['stickyblockspagetype'] = 'Page type to configure';
+$string['storedprogressbarcleanuptask'] = 'Stored progress bar cleanup task';
 $string['strictformsrequired'] = 'Strict validation of required fields';
 $string['stripalltitletags'] = 'Remove HTML tags from all activity names';
 $string['supportandservices'] = 'Support and services';
@@ -1351,6 +1348,7 @@ $string['supportemailsubject'] = 'Site support request - {$a}';
 $string['supportavailability'] = 'Support availability';
 $string['supportname'] = 'Support name';
 $string['supportpage'] = 'Contact site support link';
+$string['swaggerui'] = 'Moodle REST API UI (SwaggerUI)';
 $string['suspenduser'] = 'Suspend user account';
 $string['switchlang'] = 'Switch lang directory';
 $string['systempaths'] = 'System paths';
@@ -1488,7 +1486,7 @@ $string['tools'] = 'Admin tools';
 $string['toolsmanage'] = 'Manage admin tools';
 $string['unattendedoperation'] = 'Unattended operation';
 $string['unbookmarkthispage'] = 'Unbookmark this page';
-$string['unicoderequired'] = 'It is required that you store all your data in Unicode format (UTF-8). New installations must be performed into databases that have their default character set as Unicode.  If you are upgrading, you should perform the UTF-8 migration process (see the Admin page).';
+$string['unicoderequired'] = 'All data must be stored in Unicode format (UTF-8). For new installations, the database must have UTF-8 as default character set. If you are upgrading, you need to follow the UTF-8 migration process.';
 $string['uninstallplugin'] = 'Uninstall';
 $string['unlockaccount'] = 'Unlock account';
 $string['unoconvwarning'] = 'The version of unoconv you have installed is not supported.';
@@ -1655,3 +1653,18 @@ $string['moodlepartners_help'] = '<p>Moodle Partners are services providers that
 <a href="https://moodle.com/partners">Find a Partner</a>';
 $string['moodleservices'] = 'Moodle services';
 $string['moodleservices_help'] = 'Make sure you get the best from your Moodle learning environment by using these Moodle services:';
+
+// Deprecated since Moodle 4.5.
+$string['registration_help'] = 'By registering:
+
+* You will receive security alerts
+* You can activate mobile app push notifications from your site
+* You are contributing to our Moodle statistics of the worldwide community';
+
+// Deprecated since Moodle 5.0.
+$string['importantupdates_content'] = '<p>In the next Moodle 5.0, planned for release in April 2025, the Chat and Survey activities will
+be removed from core Moodle. They will be available as plugins in the
+<a href="https://moodle.org/plugins/">Moodle plugins directory</a>.</p>
+<p>If you wish to continue using Chat or Survey in your site, you will be able to install them as plugins before upgrading to Moodle 5.0.</p>';
+$string['importantupdates_title'] = 'Important update about Chat and Survey activities';
+$string['igbinary322buggyversion'] = 'The php-igbinary extension installed on the site can lead to problems when running with PHP 7.2. You are recommended to either upgrade to php-igbinary 3.2.5 or later, or alternatively to upgrade to PHP 7.3 or later.';

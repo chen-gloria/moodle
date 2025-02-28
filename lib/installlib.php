@@ -150,23 +150,6 @@ function install_init_dataroot($dataroot, $dirpermissions) {
 }
 
 /**
- * Print help button
- * @param string $url
- * @param string $titel
- * @return void
- */
-function install_helpbutton($url, $title='') {
-    if ($title == '') {
-        $title = get_string('help');
-    }
-    echo "<a href=\"javascript:void(0)\" ";
-    echo "onclick=\"return window.open('$url','Help','menubar=0,location=0,scrollbars,resizable,width=500,height=400')\"";
-    echo ">";
-    echo "<img src=\"pix/help.gif\" alt=\"$title\" title=\"$title\"/>";
-    echo "</a>\n";
-}
-
-/**
  * This is in function because we want the /install.php to parse in PHP4
  *
  * @param object $database
@@ -276,47 +259,6 @@ function install_generate_configphp($database, $cfg) {
 }
 
 /**
- * Prints complete help page used during installation.
- * Does not return.
- *
- * @global object
- * @param string $help
- */
-function install_print_help_page($help) {
-    global $CFG, $OUTPUT; //TODO: MUST NOT USE $OUTPUT HERE!!!
-
-    @header('Content-Type: text/html; charset=UTF-8');
-    @header('X-UA-Compatible: IE=edge');
-    @header('Cache-Control: no-store, no-cache, must-revalidate');
-    @header('Cache-Control: post-check=0, pre-check=0', false);
-    @header('Pragma: no-cache');
-    @header('Expires: Mon, 20 Aug 1969 09:23:00 GMT');
-    @header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-
-    echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">';
-    echo '<html dir="'.(right_to_left() ? 'rtl' : 'ltr').'">
-          <head>
-          <link rel="shortcut icon" href="theme/clean/pix/favicon.ico" />
-          <link rel="stylesheet" type="text/css" href="'.$CFG->wwwroot.'/install/css.php" />
-          <title>'.get_string('installation','install').'</title>
-          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-          </head><body>';
-    switch ($help) {
-        case 'phpversionhelp':
-            print_string($help, 'install', phpversion());
-            break;
-        case 'memorylimithelp':
-            print_string($help, 'install', @ini_get('memory_limit'));
-            break;
-        default:
-            print_string($help, 'install');
-    }
-    echo $OUTPUT->close_window_button(); //TODO: MUST NOT USE $OUTPUT HERE!!!
-    echo '</body></html>';
-    die;
-}
-
-/**
  * Prints installation page header, we can not use weblib yet in installer.
  *
  * @global object
@@ -388,9 +330,9 @@ function install_print_footer($config, $reload=false) {
     global $CFG;
 
     if ($config->stage > INSTALL_WELCOME) {
-        $first = '<input type="submit" id="previousbutton" class="btn btn-secondary flex-grow-0 ml-auto" name="previous" value="&laquo; '.s(get_string('previous')).'" />';
+        $first = '<input type="submit" id="previousbutton" class="btn btn-secondary flex-grow-0 ms-auto" name="previous" value="&laquo; '.s(get_string('previous')).'" />';
     } else {
-        $first = '<input type="submit" id="previousbutton" class="btn btn-secondary flex-grow-0  ml-auto" name="next" value="'.s(get_string('reload')).'" />';
+        $first = '<input type="submit" id="previousbutton" class="btn btn-secondary flex-grow-0  ms-auto" name="next" value="'.s(get_string('reload')).'" />';
         $first .= '<script type="text/javascript">
 //<![CDATA[
     var first = document.getElementById("previousbutton");
@@ -401,9 +343,9 @@ function install_print_footer($config, $reload=false) {
     }
 
     if ($reload) {
-        $next = '<input type="submit" id="nextbutton" class="btn btn-primary ml-1 flex-grow-0 mr-auto" name="next" value="'.s(get_string('reload')).'" />';
+        $next = '<input type="submit" id="nextbutton" class="btn btn-primary ms-1 flex-grow-0 me-auto" name="next" value="'.s(get_string('reload')).'" />';
     } else {
-        $next = '<input type="submit" id="nextbutton" class="btn btn-primary ml-1 flex-grow-0 mr-auto" name="next" value="'.s(get_string('next')).' &raquo;" />';
+        $next = '<input type="submit" id="nextbutton" class="btn btn-primary ms-1 flex-grow-0 me-auto" name="next" value="'.s(get_string('next')).' &raquo;" />';
     }
 
     echo '</fieldset><div id="nav_buttons" class="mb-3 w-100 d-flex">'.$first.$next.'</div>';

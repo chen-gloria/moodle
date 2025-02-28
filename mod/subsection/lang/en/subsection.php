@@ -24,11 +24,11 @@
  */
 
 $string['modulename'] = 'Subsection';
-$string['modulename_help'] = 'Delegated subsections';
 $string['modulenameplural'] = 'Subsections';
 $string['pluginadministration'] = 'Subsection administration';
 $string['pluginname'] = 'Subsection';
 $string['privacy:metadata'] = 'Subsection does not store any personal data';
+$string['quickcreatename'] = 'New subsection';
 $string['subsection:addinstance'] = 'Add subsection';
 $string['subsection:view'] = 'View subsection';
 $string['subsectionname'] = 'Name';

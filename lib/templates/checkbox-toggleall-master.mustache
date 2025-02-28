@@ -37,7 +37,7 @@
         "labelclasses": "badge bg-info text-white"
     }
 }}
-<div class="form-check">
+<div class="form-check p-0">
     <input id="{{id}}" name="{{name}}" type="checkbox" class="{{classes}}" value="{{value}}"
            aria-labelledby="{{id}}-label"
            data-action="toggle"
@@ -47,7 +47,7 @@
            data-toggle-deselectall="{{deselectall}}"
            {{#checked}}checked="checked"{{/checked}}
     />
-    <label id="{{id}}-label" for="{{id}}" class="form-check-label d-block pr-2 {{labelclasses}}">{{label}}</label>
+    <label id="{{id}}-label" for="{{id}}" class="form-check-label d-block pe-2 {{labelclasses}}">{{label}}</label>
 </div>
 {{#js}}
     require(['core/checkbox-toggleall'], function(ToggleAll) {

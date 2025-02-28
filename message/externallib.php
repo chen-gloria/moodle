@@ -212,7 +212,7 @@ class core_message_external extends external_api {
             // Check if the recipient can be messaged by the sender.
             if ($success && !\core_message\api::can_send_message($tousers[$message['touserid']]->id, $USER->id)) {
                 $success = false;
-                $errormessage = get_string('usercantbemessaged', 'message', fullname(\core_user::get_user($message['touserid'])));
+                $errormessage = get_string('usercantbemessaged', 'message');
             }
 
             // Now we can send the message (at least try).
@@ -1333,7 +1333,7 @@ class core_message_external extends external_api {
      * @throws \moodle_exception if the messaging feature is disabled on the site.
      * @since 3.2
      */
-    public static function get_conversations($userid, $limitfrom = 0, $limitnum = 0, int $type = null, bool $favourites = null,
+    public static function get_conversations($userid, $limitfrom = 0, $limitnum = 0, ?int $type = null, ?bool $favourites = null,
             bool $mergeself = false) {
         global $CFG, $USER;
 

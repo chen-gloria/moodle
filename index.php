@@ -33,10 +33,13 @@ require_once($CFG->libdir .'/filelib.php');
 
 redirect_if_major_upgrade_required();
 
+// Redirect logged-in users to homepage if required.
+$redirect = optional_param('redirect', 1, PARAM_BOOL);
+
 $urlparams = array();
 if (!empty($CFG->defaulthomepage) &&
         ($CFG->defaulthomepage == HOMEPAGE_MY || $CFG->defaulthomepage == HOMEPAGE_MYCOURSES) &&
-        optional_param('redirect', 1, PARAM_BOOL) === 0
+        $redirect === 0
 ) {
     $urlparams['redirect'] = 0;
 }
@@ -68,9 +71,8 @@ if ($hassiteconfig && moodle_needs_upgrading()) {
 // If site registration needs updating, redirect.
 \core\hub\registration::registration_reminder('/index.php');
 
-if (get_home_page() != HOMEPAGE_SITE) {
-    // Redirect logged-in users to My Moodle overview if required.
-    $redirect = optional_param('redirect', 1, PARAM_BOOL);
+$homepage = get_home_page();
+if ($homepage != HOMEPAGE_SITE) {
     if (optional_param('setdefaulthome', false, PARAM_BOOL)) {
         set_user_preference('user_home_page_preference', HOMEPAGE_SITE);
     } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY) && $redirect === 1) {
@@ -78,6 +80,8 @@ if (get_home_page() != HOMEPAGE_SITE) {
         redirect($CFG->wwwroot .'/my/');
     } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MYCOURSES) && $redirect === 1) {
         redirect($CFG->wwwroot .'/my/courses.php');
+    } else if ($homepage == HOMEPAGE_URL) {
+        redirect(get_default_home_page_url());
     } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_USER)) {
         $frontpagenode = $PAGE->settingsnav->find('frontpage', null);
         if ($frontpagenode) {
@@ -105,6 +109,14 @@ $PAGE->set_title(get_string('home'));
 $PAGE->set_heading($SITE->fullname);
 $PAGE->set_secondary_active_tab('coursehome');
 
+$siteformatoptions = course_get_format($SITE)->get_format_options();
+$modinfo = get_fast_modinfo($SITE);
+$modnamesused = $modinfo->get_used_module_names();
+
+// The home page can have acitvities in the block aside. We should
+// initialize the course editor before the page structure is rendered.
+include_course_ajax($SITE, $modnamesused);
+
 $courserenderer = $PAGE->get_renderer('core', 'course');
 
 if ($hassiteconfig) {
@@ -114,10 +126,6 @@ if ($hassiteconfig) {
 }
 
 echo $OUTPUT->header();
-
-$siteformatoptions = course_get_format($SITE)->get_format_options();
-$modinfo = get_fast_modinfo($SITE);
-$modnamesused = $modinfo->get_used_module_names();
 
 // Print Section or custom info.
 if (!empty($CFG->customfrontpageinclude)) {
@@ -131,8 +139,6 @@ if (!empty($CFG->customfrontpageinclude)) {
 } else if ($siteformatoptions['numsections'] > 0) {
     echo $courserenderer->frontpage_section1();
 }
-// Include course AJAX.
-include_course_ajax($SITE, $modnamesused);
 
 echo $courserenderer->frontpage();
 

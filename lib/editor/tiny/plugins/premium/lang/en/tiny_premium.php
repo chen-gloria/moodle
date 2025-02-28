@@ -25,12 +25,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['accessibilitycheckerinfo'] = 'The premium Accessibility Checker will override the default Accessibility Checker for users who have access to it.';
 $string['apikey'] = 'API key';
 $string['apikey_desc'] = 'Your API key is available on your <a href="https://www.tiny.cloud">Tiny Cloud</a> account page if you have purchased a subscription, or if you are on a free trial.';
 $string['emptyapikeywarning'] = 'Enabled TinyMCE Premium plugins will not be available until an API key is added.';
 $string['pluginname'] = 'TinyMCE Premium';
 $string['pluginnotfound'] = 'Tiny Premium plugin {$a} not found.';
 $string['premium:accesspremium'] = 'Access TinyMCE Premium features';
+$string['premiumplugin:a11ychecker'] = 'Accessibility Checker';
 $string['premiumplugin:advtable'] = 'Advanced Table';
 $string['premiumplugin:autocorrect'] = 'Spelling Autocorrect';
 $string['premiumplugin:casechange'] = 'Case Change';
@@ -40,6 +42,7 @@ $string['premiumplugin:export'] = 'Export';
 $string['premiumplugin:footnotes'] = 'Footnotes';
 $string['premiumplugin:formatpainter'] = 'Format Painter';
 $string['premiumplugin:linkchecker'] = 'Link Checker';
+$string['premiumplugin:math'] = 'Math Tool';
 $string['premiumplugin:pageembed'] = 'Page Embed';
 $string['premiumplugin:permanentpen'] = 'Permanent Pen';
 $string['premiumplugin:powerpaste'] = 'Powerpaste';

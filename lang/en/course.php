@@ -85,7 +85,6 @@ $string['customfield_visibility_help'] = 'This setting determines who can view t
 $string['customfield_visibletoall'] = 'Everyone';
 $string['customfield_visibletoteachers'] = 'Teachers';
 $string['customfieldsettings'] = 'Common course custom fields settings';
-$string['daystakingcourse'] = 'Days taking course';
 $string['defaultsettingscategory'] = 'Default settings';
 $string['downloadcourseconfirmation'] = 'You are about to download a zip file of course content (excluding items which cannot be downloaded and any files larger than {$a}).';
 $string['downloadcoursecontent'] = 'Download course content';
@@ -97,6 +96,11 @@ The setting has no effect on mobile app content download for offline usage.';
 $string['enabledownloadcoursecontent'] = 'Enable download course content';
 $string['errorendbeforestart'] = 'The end date ({$a}) is before the course start date.';
 $string['favourite'] = 'Starred course';
+$string['filterbothactive'] = 'First ({$a->first}) Last ({$a->last})';
+$string['filterbyname'] = 'Filter by name';
+$string['filterfirstactive'] = 'First ({$a->first})';
+$string['filterlastactive'] = 'Last ({$a->last})';
+$string['goto_overview'] = 'Go to {$a} overview';
 $string['gradetopassnotset'] = 'This course does not have a grade to pass set. It may be set in the grade item of the course (Gradebook setup).';
 $string['hideendedcoursestask'] = 'Hide courses on end date';
 $string['informationformodule'] = 'Information about the {$a} activity';
@@ -112,6 +116,11 @@ $string['norecentaccessesinfomessage'] = 'Hi {$a->userfirstname},
 <p>A number of students in {$a->coursename} have not accessed the course recently.</p>';
 $string['noteachinginfomessage'] = 'Hi {$a->userfirstname},
 <p>Courses with start dates in the next week have been identified as having no teacher or student enrolments.</p>';
+$string['overview_info'] = 'View all the activities in this course, including key details like due date and updates.';
+$string['overview_missing_notice'] = 'Check the overview page for more details.';
+$string['overview_missing_title'] = 'Information not available here for {$a} activities';
+$string['overview_page_title'] = 'Course activities: {$a}';
+$string['overview_table_caption'] = 'Table listing all {$a} activities';
 $string['participants:perpage'] = 'Number of participants per page';
 $string['participants:perpage_help'] = 'The number of users shown per page on the participants page in each course.';
 $string['participantsnavigation'] = 'Participants tertiary navigation.';
@@ -167,3 +176,6 @@ $string['gotosection'] = 'Go to section {$a}';
 
 // Deprecated since Moodle 4.3.
 $string['aria:courseimage'] = 'Course image';
+
+// Deprecated since Moodle 4.5.
+$string['daystakingcourse'] = 'Days taking course';

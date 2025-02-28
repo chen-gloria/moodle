@@ -14,13 +14,13 @@ Feature: Award badges based on competency completion
     And the following "course enrolments" exist:
       | user | course | role |
       | user1 | C1 | student |
-    And the following lp "frameworks" exist:
-      | shortname | idnumber |
-      | Framework 1 | sc-y-2 |
-    And the following lp "competencies" exist:
-      | shortname | framework |
-      | comp1 | sc-y-2 |
-      | comp2 | sc-y-2 |
+    And the following "core_competency > frameworks" exist:
+      | shortname   | idnumber |
+      | Framework 1 | sc-y-2   |
+    And the following "core_competency > competencies" exist:
+      | shortname | competencyframework |
+      | comp1     | sc-y-2              |
+      | comp2     | sc-y-2              |
     And I log in as "admin"
 
   @javascript
@@ -47,7 +47,6 @@ Feature: Award badges based on competency completion
     And I am on "Course 1" course homepage
     And I change window size to "large"
     And I navigate to "Badges" in current page administration
-    And I press "Manage badges"
     And I follow "Course Badge"
     And I select "Criteria" from the "jump" singleselect
     # Set the competency as a criteria for the badge

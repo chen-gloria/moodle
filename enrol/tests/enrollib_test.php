@@ -36,7 +36,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2012 Petr Skoda {@link http://skodak.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class enrollib_test extends advanced_testcase {
+final class enrollib_test extends advanced_testcase {
 
     public function test_enrol_get_all_users_courses(): void {
         global $DB, $CFG;
@@ -381,12 +381,12 @@ class enrollib_test extends advanced_testcase {
      *
      * @return array
      */
-    public function enrol_course_delete_with_userid_provider() {
+    public static function enrol_course_delete_with_userid_provider(): array {
         return [
             'The teacher can un-enrol users in a course' =>
                 [
                     'excludedcapabilities' => [],
-                    'results' => [
+                    'expected' => [
                         // Whether certain enrolment related data still exists in the course after the deletion.
                         // When the user has the capabilities to un-enrol users and the enrolment plugins allow manual
                         // unenerolment than all course enrolment data should be removed.
@@ -406,7 +406,7 @@ class enrollib_test extends advanced_testcase {
                         // Exclude the following capabilities for the editing teacher.
                         'enrol/self:unenrol'
                     ],
-                    'results' => [
+                    'expected' => [
                         // When the user does not have the capabilities to un-enrol self enrolled users, the data
                         // related to this enrolment method should not be removed. Everything else should be removed.
                         'Manual course enrolment instance exists' => false,
@@ -426,7 +426,7 @@ class enrollib_test extends advanced_testcase {
                         'enrol/manual:unenrol',
                         'enrol/self:unenrol'
                     ],
-                    'results' => [
+                    'expected' => [
                         // When the user does not have the capabilities to un-enrol self and manually enrolled users,
                         // the data related to these enrolment methods should not be removed.
                         'Manual course enrolment instance exists' => true,
@@ -1028,7 +1028,7 @@ class enrollib_test extends advanced_testcase {
      *
      * @return array
      */
-    public function enrol_get_my_courses_by_time_provider(): array {
+    public static function enrol_get_my_courses_by_time_provider(): array {
         return [
             'No start or end time' =>
                 [null, null, true],
@@ -1190,7 +1190,7 @@ class enrollib_test extends advanced_testcase {
     /**
      * Test cases for the test_enrol_get_my_courses_sort_by_last_access test.
      */
-    public function get_enrol_get_my_courses_sort_by_last_access_test_cases() {
+    public static function get_enrol_get_my_courses_sort_by_last_access_test_cases(): array {
         $now = time();
 
         $enrolledcoursesdata = [
@@ -1293,7 +1293,7 @@ class enrollib_test extends advanced_testcase {
     /**
      * Test the get_enrolled_courses_by_timeline_classification function.
      *
-     * @dataProvider get_enrol_get_my_courses_sort_by_last_access_test_cases()
+     * @dataProvider get_enrol_get_my_courses_sort_by_last_access_test_cases
      * @param array $enrolledcoursesdata Courses to create and enrol the user in
      * @param array $unenrolledcoursesdata Courses to create nut not enrol the user in
      * @param string $sort Sort string for the enrol function
@@ -1443,7 +1443,7 @@ class enrollib_test extends advanced_testcase {
     /**
      * Test get_enrolled_with_capabilities_join cannotmatchanyrows attribute.
      *
-     * @dataProvider get_enrolled_with_capabilities_join_cannotmatchanyrows_data()
+     * @dataProvider get_enrolled_with_capabilities_join_cannotmatchanyrows_data
      * @param string $capability the tested capability
      * @param bool $useprohibit if the capability must be assigned to prohibit
      * @param int $expectedmatch expected cannotmatchanyrows value
@@ -1490,7 +1490,7 @@ class enrollib_test extends advanced_testcase {
      *
      * @return @array of testing scenarios
      */
-    public function get_enrolled_with_capabilities_join_cannotmatchanyrows_data() {
+    public static function get_enrolled_with_capabilities_join_cannotmatchanyrows_data(): array {
         return [
             'no prohibits, no capability' => [
                 'capability' => '',
@@ -1530,7 +1530,7 @@ class enrollib_test extends advanced_testcase {
      * Data provided for test_enrol_check_plugins_with_empty_config_value test.
      * @return array
      */
-    public function empty_config_data_provider(): array {
+    public static function empty_config_data_provider(): array {
         return [
             [0],
             ["0"],
@@ -1826,5 +1826,46 @@ class enrollib_test extends advanced_testcase {
         $expectedinstance->enrolenddate = $expectedinstance->enrolstartdate + $expectedinstance->enrolperiod;
         $modifiedinstance = $manualplugin->update_enrol_plugin_data($course->id, $enrolmentdata, $instance);
         $this->assertEquals($expectedinstance, $modifiedinstance);
+    }
+
+    /**
+     * Test case for checking the email greetings in various user notification emails.
+     *
+     * @covers \enrol_plugin::send_course_welcome_message_to_user
+     */
+    public function test_email_greetings(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        // Create course.
+        $course = $this->getDataGenerator()->create_course([
+            'fullname' => 'Course 1',
+            'shortname' => 'C1',
+        ]);
+        // Create user.
+        $student = $this->getDataGenerator()->create_user();
+        // Get manual plugin.
+        $manualplugin = enrol_get_plugin('manual');
+        $maninstance = $DB->get_record(
+            'enrol',
+            ['courseid' => $course->id, 'enrol' => 'manual'],
+            '*',
+            MUST_EXIST,
+        );
+
+        $messagesink = $this->redirectMessages();
+        $manualplugin->send_course_welcome_message_to_user(
+            instance: $maninstance,
+            userid: $student->id,
+            sendoption: ENROL_SEND_EMAIL_FROM_NOREPLY,
+            message: '',
+        );
+        $messages = $messagesink->get_messages_by_component_and_type(
+            'moodle',
+            'enrolcoursewelcomemessage',
+        );
+        $this->assertNotEmpty($messages);
+        $message = reset($messages);
+        $this->assertStringContainsString('Hi ' . $student->firstname, quoted_printable_decode($message->fullmessage));
     }
 }

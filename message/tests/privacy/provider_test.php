@@ -39,7 +39,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider_test extends \core_privacy\tests\provider_testcase {
+final class provider_test extends \core_privacy\tests\provider_testcase {
 
     /**
      * Setup.
@@ -2833,7 +2833,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
      * @return int The id of the message
      * @throws dml_exception
      */
-    private function create_message(int $useridfrom, int $useridto, int $timecreated = null, bool $read = false) {
+    private function create_message(int $useridfrom, int $useridto, ?int $timecreated = null, bool $read = false) {
         global $DB;
 
         static $i = 1;
@@ -2884,7 +2884,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
      * @return int The id of the notification
      * @throws dml_exception
      */
-    private function create_notification(int $useridfrom, int $useridto, int $timecreated = null, int $timeread = null) {
+    private function create_notification(int $useridfrom, int $useridto, ?int $timecreated = null, ?int $timeread = null) {
         global $DB;
 
         static $i = 1;

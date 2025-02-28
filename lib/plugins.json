@@ -1,5 +1,13 @@
 {
     "standard": {
+        "aiplacement": [
+            "courseassist",
+            "editor"
+        ],
+        "aiprovider": [
+            "openai",
+            "azureai"
+        ],
         "antivirus": [
             "clamav"
         ],
@@ -144,6 +152,7 @@
         "customfield": [
             "checkbox",
             "date",
+            "number",
             "select",
             "text",
             "textarea"
@@ -229,7 +238,6 @@
             "mediaplugin",
             "multilang",
             "tex",
-            "tidy",
             "urltolink"
         ],
         "format": [
@@ -266,7 +274,7 @@
             "rubric"
         ],
         "h5plib": [
-            "v126"
+            "v127"
         ],
         "local": [],
         "logstore": [
@@ -304,7 +312,6 @@
             "assign",
             "bigbluebuttonbn",
             "book",
-            "chat",
             "choice",
             "data",
             "feedback",
@@ -317,11 +324,11 @@
             "lesson",
             "lti",
             "page",
+            "qbank",
             "quiz",
             "resource",
             "scorm",
             "subsection",
-            "survey",
             "url",
             "wiki",
             "workshop"
@@ -480,12 +487,16 @@
             "simpledb",
             "solr"
         ],
+        "smsgateway": [
+            "aws"
+        ],
         "theme": [
             "boost",
             "classic"
         ],
         "tiny": [
             "accessibilitychecker",
+            "aiplacement",
             "autosave",
             "equation",
             "h5p",
@@ -511,7 +522,6 @@
             "filetypes",
             "generator",
             "httpsreplace",
-            "innodb",
             "installaddon",
             "langimport",
             "licensemanager",
@@ -593,10 +603,12 @@
             "authorize"
         ],
         "filter": [
-            "censor"
+            "censor",
+            "tidy"
         ],
         "h5plib": [
-            "v124"
+            "v124",
+            "v126"
         ],
         "logstore": [
             "legacy"
@@ -608,7 +620,9 @@
             "jabber"
         ],
         "mod": [
-            "assignment"
+            "assignment",
+            "chat",
+            "survey"
         ],
         "portfolio": [
             "boxnet",
@@ -675,6 +689,7 @@
             "assignmentupgrade",
             "bloglevelupgrade",
             "health",
+            "innodb",
             "qeupgradehelper",
             "timezoneimport"
         ],

@@ -26,7 +26,7 @@ use core_user;
  * @copyright  2023 Stephan Robotta <stephan.robotta@bfh.ch>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later.
  */
-class renderable_test extends \advanced_testcase {
+final class renderable_test extends \advanced_testcase {
     /**
      * @var int The course with separate groups.
      */
@@ -319,7 +319,7 @@ class renderable_test extends \advanced_testcase {
      * @return void
      */
     public function test_get_user_list(int $courseindex, string $username, array $expectedusers,
-        string $groupname = null): void {
+        ?string $groupname = null): void {
         global $PAGE, $CFG;
         $currentcourse = $this->courses[$courseindex];
         $PAGE->set_url('/report/log/index.php?id=' . $currentcourse->id);

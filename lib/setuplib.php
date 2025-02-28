@@ -71,11 +71,11 @@ function get_whoops(): ?\Whoops\Run {
         return null;
     }
 
-    if (!$CFG->debugdisplay) {
+    if (empty($CFG->debugdisplay)) {
         return null;
     }
 
-    if (!$CFG->debug_developer_use_pretty_exceptions) {
+    if (empty($CFG->debug_developer_use_pretty_exceptions)) {
         return null;
     }
 
@@ -130,10 +130,10 @@ function get_whoops(): ?\Whoops\Run {
 /**
  * Default exception handler.
  *
- * @param Exception $ex
+ * @param Throwable $ex
  * @return void -does not return. Terminates execution!
  */
-function default_exception_handler($ex) {
+function default_exception_handler(Throwable $ex): void {
     global $CFG, $DB, $OUTPUT, $USER, $FULLME, $SESSION, $PAGE;
 
     // detect active db transactions, rollback and log as error
@@ -584,9 +584,17 @@ function initialise_cfg() {
 function initialise_local_config_cache() {
     global $CFG;
 
-    $bootstrapcachefile = $CFG->localcachedir . '/bootstrap.php';
+    $bootstraplocalfile = $CFG->localcachedir . '/bootstrap.php';
+    $bootstrapsharedfile = $CFG->cachedir . '/bootstrap.php';
 
-    if (!empty($CFG->siteidentifier) && !file_exists($bootstrapcachefile)) {
+    if (!is_readable($bootstraplocalfile) && is_readable($bootstrapsharedfile)) {
+        // If we don't have a local cache but do have a shared cache then clone it,
+        // for example when scaling up new front ends.
+        make_localcache_directory('', true);
+        copy($bootstrapsharedfile, $bootstraplocalfile);
+    }
+
+    if (!empty($CFG->siteidentifier) && !file_exists($bootstrapsharedfile) && defined('SYSCONTEXTID')) {
         $contents = "<?php
 // ********** This file is generated DO NOT EDIT **********
 \$CFG->siteidentifier = " . var_export($CFG->siteidentifier, true) . ";
@@ -597,10 +605,15 @@ if (\$CFG->bootstraphash === hash_local_config_cache() && !defined('SYSCONTEXTID
 }
 ";
 
-        $temp = $bootstrapcachefile . '.tmp' . uniqid();
+        // Create the central bootstrap first.
+        $temp = $bootstrapsharedfile . '.tmp' . uniqid();
         file_put_contents($temp, $contents);
         @chmod($temp, $CFG->filepermissions);
-        rename($temp, $bootstrapcachefile);
+        rename($temp, $bootstrapsharedfile);
+
+        // Then prewarm the local cache as well.
+        make_localcache_directory('', true);
+        copy($bootstrapsharedfile, $bootstraplocalfile);
     }
 }
 
@@ -832,41 +845,14 @@ function setup_get_remote_url() {
         }
         $_SERVER['REQUEST_URI'] = $rurl['fullpath']; // extra IIS compatibility
 
-/* NOTE: following servers are not fully tested! */
-
-    } else if (stripos($_SERVER['SERVER_SOFTWARE'], 'lighttpd') !== false) {
-        //lighttpd - not officially supported
-        $rurl['fullpath'] = $_SERVER['REQUEST_URI']; // TODO: verify this is always properly encoded
-
     } else if (stripos($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false) {
-        //nginx - not officially supported
         if (!isset($_SERVER['SCRIPT_NAME'])) {
             die('Invalid server configuration detected, please try to add "fastcgi_param SCRIPT_NAME $fastcgi_script_name;" to the nginx server configuration.');
         }
-        $rurl['fullpath'] = $_SERVER['REQUEST_URI']; // TODO: verify this is always properly encoded
-
-     } else if (stripos($_SERVER['SERVER_SOFTWARE'], 'cherokee') !== false) {
-         //cherokee - not officially supported
-         $rurl['fullpath'] = $_SERVER['REQUEST_URI']; // TODO: verify this is always properly encoded
-
-     } else if (stripos($_SERVER['SERVER_SOFTWARE'], 'zeus') !== false) {
-         //zeus - not officially supported
-         $rurl['fullpath'] = $_SERVER['REQUEST_URI']; // TODO: verify this is always properly encoded
-
-    } else if (stripos($_SERVER['SERVER_SOFTWARE'], 'LiteSpeed') !== false) {
-        //LiteSpeed - not officially supported
-        $rurl['fullpath'] = $_SERVER['REQUEST_URI']; // TODO: verify this is always properly encoded
-
-    } else if ($_SERVER['SERVER_SOFTWARE'] === 'HTTPD') {
-        //obscure name found on some servers - this is definitely not supported
-        $rurl['fullpath'] = $_SERVER['REQUEST_URI']; // TODO: verify this is always properly encoded
-
-    } else if (strpos($_SERVER['SERVER_SOFTWARE'], 'PHP') === 0) {
-        // built-in PHP Development Server
         $rurl['fullpath'] = $_SERVER['REQUEST_URI'];
-
     } else {
-        throw new moodle_exception('unsupportedwebserver', 'error', '', $_SERVER['SERVER_SOFTWARE']);
+        // Any other servers we can assume will pass the request_uri normally.
+        $rurl['fullpath'] = $_SERVER['REQUEST_URI'];
     }
 
     // sanitize the url a bit more, the encoding style may be different in vars above
@@ -1593,6 +1579,9 @@ function make_localcache_directory($directory, $exceptiononerror = true) {
         touch($timestampfile);
         @chmod($timestampfile, $CFG->filepermissions);
         clearstatcache();
+
+        // Then prewarm the local boostrap.php file as well.
+        initialise_local_config_cache();
     }
 
     if ($directory === '') {

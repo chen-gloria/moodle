@@ -43,7 +43,7 @@
             <strong>{{#str}}studentsmust, completion{{/str}}</strong>
         {{/istrackeduser}}
 
-        <div class="ml-2" role="list">
+        <div class="ms-2" role="list">
             {{#completiondetails}}
                 {{! Show completion status and description to tracked users. }}
                 {{#istrackeduser}}
@@ -51,7 +51,7 @@
                     <div class="d-flex mt-2 text-success" role="listitem" {{#accessibledescription}}title="{{.}}" aria-label="{{.}}"{{/accessibledescription}}>
                         <div>
                             {{#pix}}i/checked{{/pix}}
-                            <span class="sr-only">{{#str}}completion_automatic:done, core_course{{/str}}</span>
+                            <span class="visually-hidden">{{#str}}completion_automatic:done, core_course{{/str}}</span>
                         </div>
                         <span>{{description}}</span>
                     </div>
@@ -60,7 +60,7 @@
                     <div class="d-flex mt-2 text-danger" role="listitem" {{#accessibledescription}}title="{{.}}" aria-label="{{.}}"{{/accessibledescription}}>
                         <div>
                             {{#pix}}e/cancel{{/pix}}
-                            <span class="sr-only">{{#str}}completion_automatic:failed, core_course{{/str}}</span>
+                            <span class="visually-hidden">{{#str}}completion_automatic:failed, core_course{{/str}}</span>
                         </div>
                         <span>{{description}}</span>
                     </div>
@@ -69,7 +69,7 @@
                     <div class="d-flex mt-2" role="listitem" {{#accessibledescription}}title="{{.}}" aria-label="{{.}}"{{/accessibledescription}}>
                         <div>
                             {{#pix}}i/dot{{/pix}}
-                            <span class="sr-only">{{#str}}completion_automatic:todo, core_course{{/str}}</span>
+                            <span class="visually-hidden">{{#str}}completion_automatic:todo, core_course{{/str}}</span>
                         </div>
                         <span>{{description}}</span>
                     </div>
@@ -110,7 +110,7 @@
     {{! Show edit link to editing teachers. }}
     {{#editing}}
         {{#editurl}}
-            <div class="editcompletion border-top mt-3 pt-3">
+            <div class="editcompletion bulk-hidden border-top mt-3 pt-3">
                 <a href="{{editurl}}" class="btn btn-sm px-2 py-0">
                     {{#hasconditions}}{{#pix}} i/edit, core {{/pix}}{{#str}}editconditions, completion{{/str}}{{/hasconditions}}
                     {{^hasconditions}}{{#pix}} t/add, core {{/pix}}{{#str}}addconditions, completion{{/str}}{{/hasconditions}}

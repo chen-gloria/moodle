@@ -25,7 +25,6 @@
 namespace mod_quiz\output;
 
 use core_question\local\bank\question_version_status;
-use mod_quiz\question\bank\qbank_helper;
 use \mod_quiz\structure;
 use \html_writer;
 use qbank_previewquestion\question_preview_options;
@@ -53,8 +52,14 @@ class edit_renderer extends \plugin_renderer_base {
      * @param array $pagevars the variables from {@link question_edit_setup()}.
      * @return string HTML to output.
      */
-    public function edit_page(\mod_quiz\quiz_settings $quizobj, structure $structure,
-        \core_question\local\bank\question_edit_contexts $contexts, \moodle_url $pageurl, array $pagevars) {
+    public function edit_page(
+        \mod_quiz\quiz_settings $quizobj,
+        structure $structure,
+        \core_question\local\bank\question_edit_contexts $contexts,
+        \moodle_url $pageurl,
+        array $pagevars,
+    ) {
+
         $output = '';
 
         // Page title.
@@ -112,11 +117,14 @@ class edit_renderer extends \plugin_renderer_base {
         if ($structure->can_be_edited()) {
             $thiscontext = $contexts->lowest();
             $this->page->requires->js_call_amd('mod_quiz/modal_quiz_question_bank', 'init', [
-                $thiscontext->id
+                $thiscontext->id,
+                $quizobj->get_cm()->id,
+                $quizobj->get_cm()->id,
             ]);
 
             $this->page->requires->js_call_amd('mod_quiz/modal_add_random_question', 'init', [
                 $thiscontext->id,
+                $quizobj->get_cm()->id,
                 $pagevars['cat'],
                 $pageurl->out_as_local_url(true),
                 $pageurl->param('cmid'),
@@ -190,8 +198,8 @@ class edit_renderer extends \plugin_renderer_base {
         $output .= html_writer::empty_tag('input', ['type' => 'text', 'id' => 'inputmaxgrade',
                 'name' => 'maxgrade', 'size' => ($structure->get_decimal_places_for_grades() + 2),
                 'value' => $structure->formatted_quiz_grade(),
-                'class' => 'form-control d-inline-block align-middle w-auto ml-1']);
-        $output .= html_writer::empty_tag('input', ['type' => 'submit', 'class' => 'btn btn-secondary ml-1 d-inline-block w-auto ',
+                'class' => 'form-control d-inline-block align-middle w-auto ms-1']);
+        $output .= html_writer::empty_tag('input', ['type' => 'submit', 'class' => 'btn btn-secondary ms-1 d-inline-block w-auto ',
                 'name' => 'savechanges', 'value' => get_string('save', 'quiz')]);
         $output .= html_writer::end_tag('fieldset');
         $output .= html_writer::end_tag('form');
@@ -214,7 +222,7 @@ class edit_renderer extends \plugin_renderer_base {
             'name'  => 'repaginate',
             'id'    => 'repaginatecommand',
             'value' => get_string('repaginatecommand', 'quiz'),
-            'class' => 'btn btn-secondary mr-1',
+            'class' => 'btn btn-secondary me-1',
             'data-header' => $header,
             'data-form'   => $form,
         ];
@@ -327,13 +335,13 @@ class edit_renderer extends \plugin_renderer_base {
         $hiddenurl->param('sesskey', sesskey());
 
         $select = html_writer::select($perpage, 'questionsperpage',
-                $structure->get_questions_per_page(), false, ['class' => 'custom-select']);
+                $structure->get_questions_per_page(), false, ['class' => 'form-select']);
 
         $buttonattributes = [
             'type' => 'submit',
             'name' => 'repaginate',
             'value' => get_string('go'),
-            'class' => 'btn btn-secondary ml-1'
+            'class' => 'btn btn-secondary ms-1'
         ];
 
         $formcontent = html_writer::tag('form', html_writer::div(
@@ -402,9 +410,9 @@ class edit_renderer extends \plugin_renderer_base {
             $sectionheadingtext = format_string($section->heading);
             $sectionheading = html_writer::span($sectionheadingtext, 'instancesection');
         } else {
-            // Use a sr-only default section heading, so we don't end up with an empty section heading.
+            // Use a visually-hidden default section heading, so we don't end up with an empty section heading.
             $sectionheadingtext = get_string('sectionnoname', 'quiz');
-            $sectionheading = html_writer::span($sectionheadingtext, 'instancesection sr-only');
+            $sectionheading = html_writer::span($sectionheadingtext, 'instancesection visually-hidden');
         }
 
         $output .= html_writer::start_tag('li', ['id' => 'section-'.$section->id,
@@ -521,6 +529,8 @@ class edit_renderer extends \plugin_renderer_base {
         foreach ($structure->get_slots_in_section($section->id) as $slot) {
             $output .= $this->question_row($structure, $slot, $contexts, $pagevars, $pageurl);
         }
+
+        $this->page->requires->js_call_amd('mod_quiz/question_slot', 'init');
         return html_writer::tag('ul', $output, ['class' => 'section img-text']);
     }
 
@@ -743,8 +753,23 @@ class edit_renderer extends \plugin_renderer_base {
      * @return string HTML to output.
      */
     public function question(structure $structure, int $slot, \moodle_url $pageurl) {
+        global $DB;
+
         // Get the data required by the question_slot template.
         $slotid = $structure->get_slot_id_for_slot($slot);
+        $question = $structure->get_question_in_slot($slot);
+        $bank = $structure->get_source_bank($slot);
+
+        if ($bank?->issharedbank) {
+            $bankurl = (new \moodle_url('/question/edit.php',
+                [
+                    'cmid' => $bank->cminfo->id,
+                    'cat' => "{$question->category},{$question->contextid}",
+                ]
+            ))->out(false);
+        } else {
+            $bankurl = '';
+        }
 
         $output = '';
         $output .= html_writer::start_tag('div');
@@ -770,13 +795,15 @@ class edit_renderer extends \plugin_renderer_base {
             'questiondependencyicon' => ($structure->can_be_edited() ? $this->question_dependency_icon($structure, $slot) : ''),
             'versionselection' => false,
             'draftversion' => $structure->get_question_in_slot($slot)->status == question_version_status::QUESTION_STATUS_DRAFT,
+            'bankname' => $bank?->cminfo->get_formatted_name(),
+            'issharedbank' => $bank?->issharedbank,
+            'bankurl' => $bankurl,
         ];
 
         $data['versionoptions'] = [];
         if ($structure->get_slot_by_number($slot)->qtype !== 'random') {
             $data['versionselection'] = true;
             $data['versionoption'] = $structure->get_version_choices_for_slot($slot);
-            $this->page->requires->js_call_amd('mod_quiz/question_slot', 'init', [$slotid]);
         }
 
         // Render the question slot template.
@@ -802,7 +829,7 @@ class edit_renderer extends \plugin_renderer_base {
                 'name' => 'selectquestion[]',
                 'classes' => 'select-multiple-checkbox',
                 'label' => get_string('selectquestionslot', 'quiz', $questionslot),
-                'labelclasses' => 'sr-only',
+                'labelclasses' => 'visually-hidden',
             ]);
 
         return $this->render($checkbox);
@@ -1060,14 +1087,22 @@ class edit_renderer extends \plugin_renderer_base {
      */
     public function random_question(structure $structure, $slotnumber, $pageurl) {
         $question = $structure->get_question_in_slot($slotnumber);
+        $bankcontext = \context::instance_by_id($question->contextid);
         $slot = $structure->get_slot_by_number($slotnumber);
         $editurl = new \moodle_url('/mod/quiz/editrandom.php',
-                ['returnurl' => $pageurl->out_as_local_url(), 'slotid' => $slot->id]);
+                ['returnurl' => $pageurl->out_as_local_url(), 'slotid' => $slot->id, 'bankcmid' => $bankcontext->instanceid]);
 
         $temp = clone($question);
         $temp->questiontext = '';
-        $temp->name = qbank_helper::describe_random_question($slot);
+        $temp->name = $structure->describe_random_slot($slot->id);
         $instancename = quiz_question_tostring($temp);
+        if (strpos($instancename, structure::MISSING_QUESTION_CATEGORY_PLACEHOLDER) !== false) {
+            $label = html_writer::span(
+                get_string('missingcategory', 'mod_quiz'),
+                'badge bg-danger text-white h-50'
+            );
+            $instancename = str_replace(structure::MISSING_QUESTION_CATEGORY_PLACEHOLDER, $label, $instancename);
+        }
 
         $configuretitle = get_string('configurerandomquestion', 'quiz');
         $qtype = \question_bank::get_qtype($question->qtype, false);
@@ -1076,18 +1111,9 @@ class edit_renderer extends \plugin_renderer_base {
 
         $editicon = $this->pix_icon('t/edit', $configuretitle, 'moodle', ['title' => '']);
         $qbankurlparams = [
-            'cmid' => $structure->get_cmid(),
-            'cat' => $slot->category . ',' . $slot->contextid,
+            'cmid' => $structure->get_source_bank($slotnumber)->cminfo->id,
+            'filter' => json_encode($slot->filtercondition['filter']),
         ];
-
-        $slottags = [];
-        if (isset($slot->randomtags)) {
-            $slottags = $slot->randomtags;
-        }
-        foreach ($slottags as $index => $slottag) {
-            $slottag = explode(',', $slottag);
-            $qbankurlparams["qtagids[{$index}]"] = $slottag[0];
-        }
 
         // If this is a random question, display a link to show the questions
         // selected from in the question bank.

@@ -46,7 +46,7 @@ final class override_manager_test extends \advanced_testcase {
      * @return array containing quiz object and course
      */
     private function create_quiz_and_course(): array {
-        $course = $this->getDataGenerator()->create_course(['groupmode' => SEPARATEGROUPS]);
+        $course = $this->getDataGenerator()->create_course(['groupmode' => SEPARATEGROUPS, 'groupmodeforce' => 1]);
         $quizparams = array_merge(self::TEST_QUIZ_SETTINGS, ['course' => $course->id]);
         $quiz = $this->getDataGenerator()->create_module('quiz', $quizparams);
         $quizobj = quiz_settings::create($quiz->id);
@@ -124,6 +124,89 @@ final class override_manager_test extends \advanced_testcase {
     }
 
     /**
+     * Data provider for {@see test_can_view_override}
+     *
+     * @return array[]
+     */
+    public static function can_view_override_provider(): array {
+        return [
+            ['admin', true, true, true, true],
+            ['teacher', true, false, true, false],
+        ];
+    }
+
+    /**
+     * Test whether user can view given override
+     *
+     * @param string $currentuser
+     * @param bool $grouponeview
+     * @param bool $grouptwoview
+     * @param bool $studentoneview
+     * @param bool $studenttwoview
+     *
+     * @dataProvider can_view_override_provider
+     */
+    public function test_can_view_override(
+        string $currentuser,
+        bool $grouponeview,
+        bool $grouptwoview,
+        bool $studentoneview,
+        bool $studenttwoview,
+    ): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        [$quizobj, $course] = $this->create_quiz_and_course();
+
+        // Teacher cannot view all groups.
+        $roleid = $DB->get_field('role', 'id', ['shortname' => 'editingteacher']);
+        assign_capability('moodle/site:accessallgroups', CAP_PROHIBIT, $roleid, $quizobj->get_context()->id);
+
+        // Group one will contain our teacher and another student.
+        $groupone = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher', ['username' => 'teacher']);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupone->id, 'userid' => $teacher->id]);
+        $studentone = $this->getDataGenerator()->create_and_enrol($course);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupone->id, 'userid' => $studentone->id]);
+
+        // Group two will contain a solitary student.
+        $grouptwo = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
+        $studenttwo = $this->getDataGenerator()->create_and_enrol($course);
+        $this->getDataGenerator()->create_group_member(['groupid' => $grouptwo->id, 'userid' => $studenttwo->id]);
+
+        $user = \core_user::get_user_by_username($currentuser);
+        $this->setUser($user);
+
+        /** @var override_manager $manager */
+        $manager = $quizobj->get_override_manager();
+
+        $this->assertEquals($grouponeview, $manager->can_view_override(
+            (object) ['groupid' => $groupone->id, 'userid' => null],
+            $course,
+            $quizobj->get_cm(),
+        ));
+
+        $this->assertEquals($grouptwoview, $manager->can_view_override(
+            (object) ['groupid' => $grouptwo->id, 'userid' => null],
+            $course,
+            $quizobj->get_cm(),
+        ));
+
+        $this->assertEquals($studentoneview, $manager->can_view_override(
+            (object) ['userid' => $studentone->id, 'groupid' => null],
+            $course,
+            $quizobj->get_cm(),
+        ));
+
+        $this->assertEquals($studenttwoview, $manager->can_view_override(
+            (object) ['userid' => $studenttwo->id, 'groupid' => null],
+            $course,
+            $quizobj->get_cm(),
+        ));
+    }
+
+    /**
      * Provides values to test_save_and_get_override
      *
      * @return array
@@ -142,7 +225,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => 'test',
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => user_override_created::class,
+                'expectedeventclass' => user_override_created::class,
             ],
             'create user override - no calendar events should be created' => [
                 'existingdata' => [],
@@ -156,7 +239,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => 'test',
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => user_override_created::class,
+                'expectedeventclass' => user_override_created::class,
             ],
             'create user override - only timeopen' => [
                 'existingdata' => [],
@@ -170,7 +253,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => 'test',
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => user_override_created::class,
+                'expectedeventclass' => user_override_created::class,
             ],
             'create group override - no existing data' => [
                 'existingdata' => [],
@@ -184,7 +267,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => 'test',
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => group_override_created::class,
+                'expectedeventclass' => group_override_created::class,
             ],
             'create group override - no calendar events should be created' => [
                 'existingdata' => [],
@@ -198,7 +281,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => 'test',
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => group_override_created::class,
+                'expectedeventclass' => group_override_created::class,
             ],
             'create group override - only timeopen' => [
                 'existingdata' => [],
@@ -212,7 +295,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => null,
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => group_override_created::class,
+                'expectedeventclass' => group_override_created::class,
             ],
             'update user override - updating existing data' => [
                 'existingdata' => [
@@ -235,7 +318,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => 'test',
                 ],
                 'expectedrecordscreated' => 0,
-                'expectedevent' => user_override_updated::class,
+                'expectedeventclass' => user_override_updated::class,
             ],
             'update group override - updating existing data' => [
                 'existingdata' => [
@@ -258,7 +341,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => 'test',
                 ],
                 'expectedrecordscreated' => 0,
-                'expectedevent' => group_override_updated::class,
+                'expectedeventclass' => group_override_updated::class,
             ],
             'attempts is set to unlimited (i.e. 0)' => [
                 'existingdata' => [],
@@ -273,7 +356,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => null,
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => user_override_created::class,
+                'expectedeventclass' => user_override_created::class,
             ],
             'some settings submitted are the same as what is in the quiz (valid)' => [
                 'existingdata' => [],
@@ -289,7 +372,7 @@ final class override_manager_test extends \advanced_testcase {
                     'password' => null,
                 ],
                 'expectedrecordscreated' => 1,
-                'expectedevent' => user_override_created::class,
+                'expectedeventclass' => user_override_created::class,
             ],
         ];
     }
@@ -817,31 +900,31 @@ final class override_manager_test extends \advanced_testcase {
     public static function delete_override_provider(): array {
         return [
             'delete by id (no events logged)' => [
-                'function' => fn($manager, $override) => $manager->delete_overrides_by_id([$override->id], false, false),
+                'deletefunction' => fn($manager, $override) => $manager->delete_overrides_by_id([$override->id], false, false),
                 'checkeventslogged' => false,
             ],
             'delete single (no events logged)' => [
-                'function' => fn($manager, $override) => $manager->delete_overrides([$override], false, false),
+                'deletefunction' => fn($manager, $override) => $manager->delete_overrides([$override], false, false),
                 'checkeventslogged' => false,
             ],
             'delete all (no events logged)' => [
-                'function' => fn($manager, $override) => $manager->delete_all_overrides(false, false),
+                'deletefunction' => fn($manager, $override) => $manager->delete_all_overrides(false, false),
                 'checkeventslogged' => false,
             ],
             'delete by id (events logged)' => [
-                'function' => fn($manager, $override) => $manager->delete_overrides_by_id([$override->id], true, false),
+                'deletefunction' => fn($manager, $override) => $manager->delete_overrides_by_id([$override->id], true, false),
                 'checkeventslogged' => true,
             ],
             'delete single (events logged)' => [
-                'function' => fn($manager, $override) => $manager->delete_overrides([$override], true, false),
+                'deletefunction' => fn($manager, $override) => $manager->delete_overrides([$override], true, false),
                 'checkeventslogged' => true,
             ],
             'delete all (events logged)' => [
-                'function' => fn($manager, $override) => $manager->delete_all_overrides(true, false),
+                'deletefunction' => fn($manager, $override) => $manager->delete_all_overrides(true, false),
                 'checkeventslogged' => true,
             ],
             'delete all in database (events logged)' => [
-                'function' => fn($manager, $override) => $manager->delete_all_overrides(true, false),
+                'deletefunction' => fn($manager, $override) => $manager->delete_all_overrides(true, false),
                 'checkeventslogged' => true,
             ],
         ];

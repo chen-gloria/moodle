@@ -28,7 +28,7 @@ require_once(__DIR__.'/..//fixtures/event_fixtures.php');
  * @copyright  2013 Petr Skoda {@link http://skodak.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class base_test extends \advanced_testcase {
+final class base_test extends \advanced_testcase {
 
     const DEBUGGING_MSG = 'Events API using $handlers array has been deprecated in favour of Events 2 API, please use it instead.';
 
@@ -571,56 +571,6 @@ class base_test extends \advanced_testcase {
         $this->assertDebuggingCalled('level property is deprecated, use edulevel property instead');
 
         $this->assertSame($event::LEVEL_TEACHING, $event->edulevel);
-    }
-
-    public function test_legacy(): void {
-        global $DB, $CFG;
-
-        $this->resetAfterTest(true);
-
-        $observers = array(
-            array(
-                'eventname'   => '\core_tests\event\unittest_executed',
-                'callback'    => '\core_tests\event\unittest_observer::observe_one',
-            ),
-            array(
-                'eventname'   => '*',
-                'callback'    => '\core_tests\event\unittest_observer::observe_all',
-                'includefile' => null,
-                'internal'    => 1,
-                'priority'    => 9999,
-            ),
-        );
-
-        $DB->delete_records('log', array());
-        $this->expectException(\coding_exception::class);
-        events_update_definition('unittest');
-
-        $DB->delete_records_select('events_handlers', "component <> 'unittest'");
-
-        $this->assertDebuggingCalled(self::DEBUGGING_MSG, DEBUG_DEVELOPER);
-        $this->assertEquals(3, $DB->count_records('events_handlers'));
-        set_config('loglifetime', 60*60*24*5);
-
-        \core\event\manager::phpunit_replace_observers($observers);
-        \core_tests\event\unittest_observer::reset();
-
-        $event1 = \core_tests\event\unittest_executed::create(array('context'=>\context_system::instance(), 'other'=>array('sample'=>5, 'xx'=>10)));
-        $event1->trigger();
-
-        $event2 = \core_tests\event\unittest_executed::create(array('context'=>\context_system::instance(), 'other'=>array('sample'=>6, 'xx'=>11)));
-        $event2->nest = true;
-        $event2->trigger();
-
-        $this->assertSame(
-            array('observe_all-5', 'observe_one-5', 'observe_all-nesting-6', 'observe_one-6', 'observe_all-666', 'observe_one-666'),
-            \core_tests\event\unittest_observer::$info);
-
-        $this->assertSame($event1, \core_tests\event\unittest_observer::$event[0]);
-        $this->assertSame($event1, \core_tests\event\unittest_observer::$event[1]);
-
-        $logs = $DB->get_records('log', array(), 'id ASC');
-        $this->assertCount(0, $logs);
     }
 
     public function test_restore_event(): void {

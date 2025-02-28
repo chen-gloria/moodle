@@ -32,8 +32,8 @@
 {{< mod_forum/forum_discussion_nested_v2_first_post }}
     {{$subject}}
         <h3
-            {{#isdeleted}}class="h6 font-weight-bold"{{/isdeleted}}
-            {{^isdeleted}}class="sr-only"{{/isdeleted}}
+            {{#isdeleted}}class="h6 fw-bold"{{/isdeleted}}
+            {{^isdeleted}}class="visually-hidden"{{/isdeleted}}
             data-region-content="forum-post-core-subject"
         >{{{subject}}}</h3>
     {{/subject}}
@@ -43,7 +43,7 @@
                 {{#capabilities.reply}}
                     <div class="d-flex mt-1">
                         <button
-                            class="font-weight-bold btn btn-link px-0"
+                            class="fw-bold btn btn-link px-0"
                             data-href="{{{urls.reply}}}"
                             data-post-id="{{id}}"
                             data-action="create-inpage-reply"
@@ -58,14 +58,14 @@
     {{/footer}}
     {{$replies}}
         <div class="indent my-4" data-region="replies-visibility-toggle-container" style="display: none">
-            <button class="btn btn-link pl-0" data-action="show-replies">
+            <button class="btn btn-link ps-0" data-action="show-replies">
                 {{#str}}
                     showpreviousrepliescount,
                     mod_forum,
                     <span data-region="reply-count">{{#totalreplycount}}{{.}}{{/totalreplycount}}{{^totalreplycount}}0{{/totalreplycount}}</span>
                 {{/str}}
             </button>
-            <button class="btn btn-link hidden pl-0" data-action="hide-replies">
+            <button class="btn btn-link hidden ps-0" data-action="hide-replies">
                 {{#str}}
                     hidepreviousrepliescount,
                     mod_forum,

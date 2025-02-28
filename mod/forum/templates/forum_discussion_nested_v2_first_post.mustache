@@ -64,8 +64,8 @@
             {{#unread}}
                 <div class="icon-size-4 text-info text-center mt-3 icon-no-margin">
                     <span
-                        data-toggle="tooltip"
-                        data-placement="left"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="left"
                         title="{{#str}} unreadpost, mod_forum {{/str}}"
                         tabindex="0"
                     >{{#pix}} i/flagged, core {{/pix}}</span>
@@ -77,15 +77,15 @@
             <header id="post-header-{{id}}-{{uniqid}}">
                 {{^isdeleted}}
                     <div class="d-flex flex-wrap align-items-center mb-1">
-                        <div class="mr-2" tabindex="-1">
+                        <div class="me-2" tabindex="-1">
                             {{#author}}
-                                <h4 class="h6 d-lg-inline-block mb-0 author-header mr-1">
+                                <h4 class="h6 d-lg-inline-block mb-0 author-header ms-1">
                                     {{#parentauthorname}}
                                         {{#isprivatereply}}
                                             <span class="text-danger">
                                                 {{#str}}
                                                     authorreplyingprivatelytoauthor, mod_forum, {
-                                                        "respondant":"<a class='font-weight-bold author-name' data-region='author-name' href='{{{urls.profile}}}'>{{fullname}}</a>",
+                                                        "respondant":"<a class='fw-bold author-name' data-region='author-name' href='{{{urls.profile}}}'>{{fullname}}</a>",
                                                         "author":"{{parentauthorname}}"
                                                     }
                                                 {{/str}}
@@ -94,14 +94,14 @@
                                         {{^isprivatereply}}
                                             {{#str}}
                                                 authorreplyingtoauthor, mod_forum, {
-                                                    "respondant":"<a class='font-weight-bold author-name' data-region='author-name' href='{{{urls.profile}}}'>{{fullname}}</a>",
+                                                    "respondant":"<a class='fw-bold author-name' data-region='author-name' href='{{{urls.profile}}}'>{{fullname}}</a>",
                                                     "author":"{{parentauthorname}}"
                                                 }
                                             {{/str}}
                                         {{/isprivatereply}}
                                     {{/parentauthorname}}
                                     {{^parentauthorname}}
-                                        <a class='font-weight-bold author-name' data-region='author-name' href="{{{urls.profile}}}">{{fullname}}</a>
+                                        <a class='fw-bold author-name' data-region='author-name' href="{{{urls.profile}}}">{{fullname}}</a>
                                     {{/parentauthorname}}
                                 </h4>
                             {{/author}}
@@ -113,10 +113,10 @@
                             {{/core/time_element}}
                         </div>
 
-                        <div class="d-flex align-items-center ml-auto">
+                        <div class="d-flex align-items-center ms-auto">
                             {{#author.groups}}
                                 {{#urls.image}}
-                                    <div class="mr-2">
+                                    <div class="me-2">
                                         {{#urls.group}}
                                             <a href="{{urls.group}}" aria-label='{{#str}} memberofgroup, group, {{name}}{{/str}}'>
                                                 <img
@@ -146,7 +146,7 @@
                                             class="btn btn-icon text-muted icon-no-margin icon-size-3"
                                             type="button"
                                             id="post-actions-menu-{{id}}-{{uniqid}}"
-                                            data-toggle="dropdown"
+                                            data-bs-toggle="dropdown"
                                             aria-haspopup="true"
                                             aria-expanded="false"
                                             aria-label="{{#str}} actionsforpost, mod_forum {{/str}}"
@@ -154,7 +154,7 @@
                                             {{#pix}} i/moremenu {{/pix}}
                                         </button>
                                         <!-- inline style to fix RTL placement bug -->
-                                        <div class="dropdown-menu dropdown-menu-right rounded-lg shadow border-0" aria-labelledby="post-actions-menu-{{id}}-{{uniqid}}" style="right: auto" role="menubar">
+                                        <div class="dropdown-menu dropdown-menu-end rounded-3 shadow border-0" aria-labelledby="post-actions-menu-{{id}}-{{uniqid}}" style="right: auto" role="menubar">
                                             {{#capabilities}}
                                                 {{#view}}
                                                     <a
@@ -241,17 +241,17 @@
                 {{/isdeleted}}
                 {{$subject}}
                     <h2
-                        class="h1 font-weight-bold post-subject mt-n2"
+                        class="h1 fw-bold post-subject mt-n2"
                         data-region-content="forum-post-core-subject"
                         data-reply-subject="{{replysubject}}"
                     >{{{subject}}}</h2>
                 {{/subject}}
                 {{#hasreplycount}}
-                    <span class="sr-only">{{#str}} numberofreplies, mod_forum, {{replycount}} {{/str}}</span>
+                    <span class="visually-hidden">{{#str}} numberofreplies, mod_forum, {{replycount}} {{/str}}</span>
                 {{/hasreplycount}}
             </header>
 
-            <div class="post-message pr-md-5" id="post-content-{{id}}">
+            <div class="post-message pe-md-5" id="post-content-{{id}}">
                 {{{message}}}
             </div>
 
@@ -284,7 +284,7 @@
                                 <a
                                     href="{{{url}}}"
                                     aria-label="{{#str}} attachmentname, mod_forum, {{filename}} {{/str}}"
-                                    class="font-weight-bold"
+                                    class="fw-bold"
                                 >
                                     {{#str}} attachmentnameandfilesize, mod_forum, {"name": "{{filename}}", "size": "{{filesizeformatted}}"} {{/str}}
                                 </a>
@@ -307,14 +307,14 @@
                             <div>{{{.}}}</div>
                         {{/html.rating}}
                     {{/readonly}}
-                    <div class="ml-auto d-flex flex-column">
+                    <div class="ms-auto d-flex flex-column">
                         {{#haswordcount}}
-                            <span class="ml-auto badge bg-light text-dark">
+                            <span class="ms-auto badge bg-light text-dark">
                                 {{#str}} numwords, core, {{wordcount}} {{/str}}
                             </span>
                         {{/haswordcount}}
                         {{#html.taglist}}
-                            <div class="d-inline-block ml-auto {{#haswordcount}}mt-2{{/haswordcount}}">{{{.}}}</div>
+                            <div class="d-inline-block ms-auto {{#haswordcount}}mt-2{{/haswordcount}}">{{{.}}}</div>
                         {{/html.taglist}}
                     </div>
                 </div>
@@ -326,7 +326,7 @@
                         <div class="d-flex mt-3">
                             {{#capabilities.reply}}
                                 <button
-                                    class="btn btn-primary btn-lg font-weight-bold px-4"
+                                    class="btn btn-primary btn-lg fw-bold px-4"
                                     data-href="{{{urls.reply}}}"
                                     data-post-id="{{id}}"
                                     data-action="create-inpage-reply"

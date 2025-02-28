@@ -37,7 +37,7 @@ In places like the course page and the activity chooser icons have a more promin
 The CSS classes for these icons are ```activityiconcontainer``` wrapper class with the added activity name. And the ```activityicon``` class for the image. See the template ```course/format/templates/local/content/cm/title.mustache``` for more info.
 
 <div class="media mb-3">
-    <div class="activityiconcontainer assessment mr-3">
+    <div class="activityiconcontainer assessment me-3">
         {{< image "quiz/monologo.svg" "Quiz icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">quiz</div>
@@ -74,7 +74,7 @@ Since Moodle 4.4, the available activity purposes are:
 
 ### Purpose colours
 
-The activity icon colours can be customised using the theme Boost 'Raw initial SCSS' feature. Simply copy any of these scss variables that you want to customize, change the colour value, generate the filter using, for instance https://codepen.io/sosuke/pen/Pjoqqp and done! There is no background colour or filter for the 'Other' or the 'Interface' purposes.
+The activity icon colours can be customised using the theme Boost 'Raw initial SCSS' feature. The following variables are available:
 
 {{< highlight scss >}}
 $activity-icon-administration-bg:     #da58ef !default;
@@ -83,19 +83,6 @@ $activity-icon-collaboration-bg:      #5b40ff !default;
 $activity-icon-communication-bg:      #eb6200 !default;
 $activity-icon-content-bg:            #0099ad !default;
 $activity-icon-interactivecontent-bg: #8d3d1b !default;
-
-$activity-icon-administration-filter:
-    invert(45%) sepia(46%) saturate(3819%) hue-rotate(260deg) brightness(101%) contrast(87%) !default;
-$activity-icon-assessment-filter:
-    invert(36%) sepia(98%) saturate(6969%) hue-rotate(315deg) brightness(90%) contrast(119%) !default;
-$activity-icon-collaboration-filter:
-    invert(25%) sepia(54%) saturate(6226%) hue-rotate(245deg) brightness(100%) contrast(102%) !default;
-$activity-icon-communication-filter:
-    invert(48%) sepia(74%) saturate(4887%) hue-rotate(11deg) brightness(102%) contrast(101%) !default;
-$activity-icon-content-filter:
-    invert(49%) sepia(52%) saturate(4675%) hue-rotate(156deg) brightness(89%) contrast(102%) !default;
-$activity-icon-interactivecontent-filter:
-    invert(25%) sepia(63%) saturate(1152%) hue-rotate(344deg) brightness(94%) contrast(91%) !default;
 {{</ highlight >}}
 
 ### Custom activity icons
@@ -114,7 +101,7 @@ $iconurl = get_fast_modinfo($courseid)->get_cm($cmid)->get_icon_url()->out(false
 {{< /php >}}
 
 <div class="media mb-3">
-    <div class="activityiconcontainer lti mr-3">
+    <div class="activityiconcontainer lti me-3">
         <img alt="lti icon" title="lti icon" src="https://moodle.org/theme/moodleorg/pix/moodle_logo_small.svg" class="activityicon ">    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">external</div>
@@ -139,7 +126,7 @@ function h5pactivity_is_branded(): bool {
 {{< /php >}}
 
 <div class="media mb-3">
-    <div class="activityiconcontainer mr-3">
+    <div class="activityiconcontainer me-3">
         {{< image "h5pactivity/monologo.svg" "H5P activity icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">h5pactivity</div>
@@ -150,7 +137,7 @@ function h5pactivity_is_branded(): bool {
 ## Examples
 
 <div class="media mb-3">
-    <div class="activityiconcontainer administration mr-3">
+    <div class="activityiconcontainer administration me-3">
         {{< image "quiz/monologo.svg" "Admin icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">Administration</div>
@@ -159,7 +146,7 @@ function h5pactivity_is_branded(): bool {
 </div>
 
 <div class="media mb-3">
-    <div class="activityiconcontainer assessment mr-3">
+    <div class="activityiconcontainer assessment me-3">
         {{< image "quiz/monologo.svg" "Assessment icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">Assessment</div>
@@ -168,7 +155,7 @@ function h5pactivity_is_branded(): bool {
 </div>
 
 <div class="media mb-3">
-    <div class="activityiconcontainer collaboration mr-3">
+    <div class="activityiconcontainer collaboration me-3">
         {{< image "wiki/monologo.svg" "Collaboration icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">Collaboration</div>
@@ -177,7 +164,7 @@ function h5pactivity_is_branded(): bool {
 </div>
 
 <div class="media mb-3">
-    <div class="activityiconcontainer communication mr-3">
+    <div class="activityiconcontainer communication me-3">
         {{< image "choice/monologo.svg" "Communication icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">Communication</div>
@@ -186,7 +173,7 @@ function h5pactivity_is_branded(): bool {
 </div>
 
 <div class="media mb-3">
-    <div class="activityiconcontainer interactivecontent mr-3">
+    <div class="activityiconcontainer interactivecontent me-3">
         {{< image "lesson/monologo.svg" "Interactive content icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">Interactive content</div>
@@ -195,7 +182,7 @@ function h5pactivity_is_branded(): bool {
 </div>
 
 <div class="media mb-3">
-    <div class="activityiconcontainer content mr-3">
+    <div class="activityiconcontainer content me-3">
         {{< image "book/monologo.svg" "Resource icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">Resource</div>
@@ -204,7 +191,7 @@ function h5pactivity_is_branded(): bool {
 </div>
 
 <div class="media mb-3">
-    <div class="activityiconcontainer mr-3">
+    <div class="activityiconcontainer me-3">
         {{< image "lti/monologo.svg" "Other icon" "activityicon">}}    </div>
     <div class="media-body align-self-center">
         <div class="text-uppercase small">Other</div>

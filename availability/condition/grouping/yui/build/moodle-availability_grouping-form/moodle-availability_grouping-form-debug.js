@@ -33,9 +33,9 @@ M.availability_grouping.form.initInner = function(groupings) {
 
 M.availability_grouping.form.getNode = function(json) {
     // Create HTML structure.
-    var html = '<label><span class="pr-3">' + M.util.get_string('title', 'availability_grouping') + '</span> ' +
+    var html = '<label><span class="pe-3">' + M.util.get_string('title', 'availability_grouping') + '</span> ' +
             '<span class="availability-group">' +
-            '<select name="id" class="custom-select">' +
+            '<select name="id" class="form-select">' +
             '<option value="choose">' + M.util.get_string('choosedots', 'moodle') + '</option>';
     for (var i = 0; i < this.groupings.length; i++) {
         var grouping = this.groupings[i];

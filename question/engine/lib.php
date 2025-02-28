@@ -79,7 +79,7 @@ abstract class question_engine {
      * @param moodle_database $db a database connectoin. Defaults to global $DB.
      * @return question_usage_by_activity loaded from the database.
      */
-    public static function load_questions_usage_by_activity($qubaid, moodle_database $db = null) {
+    public static function load_questions_usage_by_activity($qubaid, ?moodle_database $db = null) {
         $dm = new question_engine_data_mapper($db);
         return $dm->load_questions_usage_by_activity($qubaid);
     }
@@ -91,7 +91,7 @@ abstract class question_engine {
      * @param question_usage_by_activity the usage to save.
      * @param moodle_database $db a database connectoin. Defaults to global $DB.
      */
-    public static function save_questions_usage_by_activity(question_usage_by_activity $quba, moodle_database $db = null) {
+    public static function save_questions_usage_by_activity(question_usage_by_activity $quba, ?moodle_database $db = null) {
         $dm = new question_engine_data_mapper($db);
         $observer = $quba->get_observer();
         if ($observer instanceof question_engine_unit_of_work) {
@@ -154,7 +154,7 @@ abstract class question_engine {
      * @return boolean whether any of these questions are being used by any of
      *      those usages.
      */
-    public static function questions_in_use(array $questionids, qubaid_condition $qubaids = null) {
+    public static function questions_in_use(array $questionids, ?qubaid_condition $qubaids = null) {
         if (is_null($qubaids)) {
             return false;
         }
@@ -703,7 +703,7 @@ class question_display_options {
      * Helper to add the question identify (if there is one) to the label of an input field in a question.
      *
      * @param string $label The plain field label. E.g. 'Answer 1'
-     * @param bool $sridentifier If true, the question identifier, if added, will be wrapped in a sr-only span. Default false.
+     * @param bool $sridentifier If true, the question identifier, if added, will be wrapped in a visually-hidden. Default false.
      * @param bool $addbefore If true, the question identifier will be added before the label.
      * @return string The amended label. For example 'Answer 1, Question 1'.
      */
@@ -713,7 +713,7 @@ class question_display_options {
         }
         $identifier = $this->questionidentifier;
         if ($sridentifier) {
-            $identifier = html_writer::span($identifier, 'sr-only');
+            $identifier = html_writer::span($identifier, 'visually-hidden');
         }
         $fieldlang = 'fieldinquestion';
         if ($addbefore) {

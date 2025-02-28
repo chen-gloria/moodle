@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core_courseformat\sectiondelegate;
+
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot. '/course/format/lib.php');
 
@@ -288,6 +290,10 @@ class format_singleactivity extends core_courseformat\base {
             }
             foreach ($cmlist as $cmid) {
                 if ($sectionnum > 1) {
+                    // These module types cannot be moved from section 0.
+                    if (!$modinfo->cms[$cmid]->is_of_type_that_can_display()) {
+                        continue;
+                    }
                     moveto_module($modinfo->get_cm($cmid), $modinfo->get_section_info(1));
                 } else if (!$hasvisibleactivities && $sectionnum == 1 && $modinfo->get_cm($cmid)->visible) {
                     $hasvisibleactivities = true;
@@ -296,6 +302,10 @@ class format_singleactivity extends core_courseformat\base {
         }
         if (!empty($modinfo->sections[0])) {
             foreach ($modinfo->sections[0] as $cmid) {
+                // These module types cannot be moved from section 0.
+                if (!$modinfo->cms[$cmid]->is_of_type_that_can_display()) {
+                    continue;
+                }
                 if (!$activity || $cmid != $activity->id) {
                     moveto_module($modinfo->get_cm($cmid), $modinfo->get_section_info(1), $firstorphanedcm);
                 }
@@ -338,7 +348,8 @@ class format_singleactivity extends core_courseformat\base {
     /**
      * Get the activities supported by the format.
      *
-     * Here we ignore the modules that do not have a page of their own, like the label.
+     * Here we ignore the modules that do not have a page of their own or need sections,
+     * like the label or subsection.
      *
      * @return array array($module => $name of the module).
      */
@@ -346,6 +357,9 @@ class format_singleactivity extends core_courseformat\base {
         $availabletypes = get_module_types_names();
         foreach ($availabletypes as $module => $name) {
             if (plugin_supports('mod', $module, FEATURE_NO_VIEW_LINK, false)) {
+                unset($availabletypes[$module]);
+            }
+            if (sectiondelegate::has_delegate_class('mod_' . $module)) {
                 unset($availabletypes[$module]);
             }
         }

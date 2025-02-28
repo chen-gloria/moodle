@@ -314,7 +314,7 @@ class phpunit_util extends testing_util {
 
         if ($warnings) {
             $warnings = implode("\n", $warnings);
-            trigger_error($warnings, E_USER_WARNING);
+            throw new \core_phpunit\exception\test_exception($warnings);
         }
     }
 
@@ -529,6 +529,8 @@ class phpunit_util extends testing_util {
         $template = <<<EOF
             <testsuite name="@component@_testsuite">
               <directory suffix="_test.php">@dir@</directory>
+              <exclude>@dir@/classes</exclude>
+              <exclude>@dir@/fixtures</exclude>
             </testsuite>
 
         EOF;
@@ -620,7 +622,9 @@ class phpunit_util extends testing_util {
         $template = <<<EOT
             <testsuites>
               <testsuite name="@component@_testsuite">
-                <directory suffix="_test.php">.</directory>
+                <directory suffix="_test.php">tests</directory>
+                <exclude>tests/classes</exclude>
+                <exclude>tests/fixtures</exclude>
               </testsuite>
             </testsuites>
           EOT;
@@ -629,7 +633,7 @@ class phpunit_util extends testing_util {
               <directory suffix=".php">.</directory>
             </include>
             <exclude>
-              <directory suffix="_test.php">.</directory>
+              <directory suffix="_test.php">tests</directory>
             </exclude>
         EOT;
 

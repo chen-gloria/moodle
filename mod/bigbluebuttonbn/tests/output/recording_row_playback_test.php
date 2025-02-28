@@ -28,7 +28,7 @@ use mod_bigbluebuttonbn\test\testcase_helper_trait;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Laurent David  (laurent.david [at] call-learning [dt] fr)
  */
-class recording_row_playback_test extends \advanced_testcase {
+final class recording_row_playback_test extends \advanced_testcase {
     use testcase_helper_trait;
 
     /**
@@ -95,7 +95,7 @@ class recording_row_playback_test extends \advanced_testcase {
      * @covers       \recording_row_playback::should_be_included
      * @dataProvider should_be_included_data_provider
      */
-    public function test_should_be_included(string $role, array $canview, object $globalsettings = null): void {
+    public function test_should_be_included(string $role, array $canview, ?object $globalsettings = null): void {
         global $PAGE;
         $this->resetAfterTest();
         ['recordings' => $recordingsdata, 'activity' => $activity] = $this->create_activity_with_recordings(
@@ -130,7 +130,7 @@ class recording_row_playback_test extends \advanced_testcase {
      *
      * @return array
      */
-    public function should_be_included_data_provider() {
+    public static function should_be_included_data_provider(): array {
         return [
             'editingteacher user should see all' => [
                 'role' => 'editingteacher',

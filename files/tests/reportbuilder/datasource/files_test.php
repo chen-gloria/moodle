@@ -20,13 +20,8 @@ namespace core_files\reportbuilder\datasource;
 
 use core\context\{course, coursecat, user};
 use core_reportbuilder_generator;
-use core_reportbuilder_testcase;
 use core_reportbuilder\local\filters\{boolean_select, date, filesize, select, text};
-
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once("{$CFG->dirroot}/reportbuilder/tests/helpers.php");
+use core_reportbuilder\tests\core_reportbuilder_testcase;
 
 /**
  * Unit tests for files datasource
@@ -230,6 +225,12 @@ final class files_test extends core_reportbuilder_testcase {
             'Filter type (non match)' => ['file:type', [
                 'file:type_operator' => select::EQUAL_TO,
                 'file:type_value' => 'image/png',
+            ], 0],
+            'Filter author' => ['file:author', [
+                'file:author_operator' => text::IS_EMPTY,
+            ], 4],
+            'Filter author (non match)' => ['file:author', [
+                'file:author_operator' => text::IS_NOT_EMPTY,
             ], 0],
             'Filter license' => ['file:license', [
                 'file:license_operator' => select::EQUAL_TO,

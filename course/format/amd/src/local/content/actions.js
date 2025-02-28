@@ -26,9 +26,12 @@
  */
 
 import {BaseComponent} from 'core/reactive';
+import {eventTypes} from 'core/local/inplace_editable/events';
+import Collapse from 'theme_boost/bootstrap/collapse';
 import Modal from 'core/modal';
 import ModalSaveCancel from 'core/modal_save_cancel';
 import ModalDeleteCancel from 'core/modal_delete_cancel';
+import ModalCopyToClipboard from 'core/modal_copy_to_clipboard';
 import ModalEvents from 'core/modal_events';
 import Templates from 'core/templates';
 import {prefetchStrings} from 'core/prefetch';
@@ -39,7 +42,7 @@ import * as CourseEvents from 'core_course/events';
 import Pending from 'core/pending';
 import ContentTree from 'core_courseformat/local/courseeditor/contenttree';
 // The jQuery module is only used for interacting with Boostrap 4. It can we removed when MDL-71979 is integrated.
-import jQuery from 'jquery';
+import Notification from "core/notification";
 
 // Load global strings.
 prefetchStrings('core', ['movecoursesection', 'movecoursemodule', 'confirm', 'delete']);
@@ -75,18 +78,22 @@ export default class extends BaseComponent {
             SECTIONLINK: `[data-for='section']`,
             CMLINK: `[data-for='cm']`,
             SECTIONNODE: `[data-for='sectionnode']`,
-            MODALTOGGLER: `[data-toggle='collapse']`,
+            MODALTOGGLER: `[data-bs-toggle='collapse']`,
             ADDSECTION: `[data-action='addSection']`,
             CONTENTTREE: `#destination-selector`,
             ACTIONMENU: `.action-menu`,
-            ACTIONMENUTOGGLER: `[data-toggle="dropdown"]`,
+            ACTIONMENUTOGGLER: `[data-bs-toggle="dropdown"]`,
             // Availability modal selectors.
             OPTIONSRADIO: `[type='radio']`,
+            COURSEADDSECTION: `#course-addsection`,
+            MAXSECTIONSWARNING: `[data-region='max-sections-warning']`,
+            ADDSECTIONREGION: `[data-region='section-addsection']`,
         };
         // Component css classes.
         this.classes = {
-            DISABLED: `text-body`,
-            ITALIC: `font-italic`,
+            DISABLED: `disabled`,
+            ITALIC: `fst-italic`,
+            DISPLAYNONE: `d-none`,
         };
     }
 
@@ -124,6 +131,12 @@ export default class extends BaseComponent {
             this.element,
             CourseEvents.sectionRefreshed,
             () => this._checkSectionlist({state})
+        );
+        // Any inplace editable update needs state refresh.
+        this.addEventListener(
+            this.element,
+            eventTypes.elementUpdated,
+            this._inplaceEditableHandler
         );
     }
 
@@ -183,6 +196,30 @@ export default class extends BaseComponent {
     _checkSectionlist({state}) {
         // Disable "add section" actions if the course max sections has been exceeded.
         this._setAddSectionLocked(state.course.sectionlist.length > state.course.maxsections);
+    }
+
+    /**
+     * Handle inplace editable updates.
+     *
+     * @param {Event} event the triggered event
+     * @private
+     */
+    _inplaceEditableHandler(event) {
+        const itemtype = event.detail?.ajaxreturn?.itemtype;
+        const itemid = parseInt(event.detail?.ajaxreturn?.itemid);
+        if (!Number.isFinite(itemid) || !itemtype) {
+            return;
+        }
+
+        if (itemtype === 'activityname') {
+            this.reactive.dispatch('cmState', [itemid]);
+            return;
+        }
+        // Sections uses sectionname for normal sections and sectionnamenl for the no link sections.
+        if (itemtype === 'sectionname' || itemtype === 'sectionnamenl') {
+            this.reactive.dispatch('sectionState', [itemid]);
+            return;
+        }
     }
 
     /**
@@ -322,7 +359,11 @@ export default class extends BaseComponent {
             data.cmid = cmInfo.id;
             data.cmname = cmInfo.name;
             data.information = await this.reactive.getFormatString('cmmove_info', data.cmname);
-            titleText = this.reactive.getFormatString('cmmove_title');
+            if (cmInfo.hasdelegatedsection) {
+                titleText = this.reactive.getFormatString('cmmove_subsectiontitle');
+            } else {
+                titleText = this.reactive.getFormatString('cmmove_title');
+            }
         } else {
             data.information = await this.reactive.getFormatString('cmsmove_info', cmIds.length);
             titleText = this.reactive.getFormatString('cmsmove_title');
@@ -354,19 +395,16 @@ export default class extends BaseComponent {
             }
         );
 
-        // Open the cm section node if possible (Bootstrap 4 uses jQuery to interact with collapsibles).
-        // All jQuery in this code can be replaced when MDL-71979 is integrated.
         cmIds.forEach(cmId => {
-            const currentElement = modalBody.querySelector(`${this.selectors.CMLINK}[data-id='${cmId}']`);
-            const sectionnode = currentElement.closest(this.selectors.SECTIONNODE);
-            const toggler = jQuery(sectionnode).find(this.selectors.MODALTOGGLER);
-            let collapsibleId = toggler.data('target') ?? toggler.attr('href');
-            if (collapsibleId) {
-                // We cannot be sure we have # in the id element name.
-                collapsibleId = collapsibleId.replace('#', '');
-                const expandNode = modalBody.querySelector(`#${collapsibleId}`);
-                jQuery(expandNode).collapse('show');
+            const cmInfo = this.reactive.get('cm', cmId);
+            let selector;
+            if (!cmInfo.hasdelegatedsection) {
+                selector = `${this.selectors.CMLINK}[data-id='${cmId}']`;
+            } else {
+                selector = `${this.selectors.SECTIONLINK}[data-id='${cmInfo.sectionid}']`;
             }
+            const currentElement = modalBody.querySelector(selector);
+            this._expandCmMoveModalParentSections(modalBody, currentElement);
         });
 
         modalBody.addEventListener('click', (event) => {
@@ -381,6 +419,7 @@ export default class extends BaseComponent {
 
             let targetSectionId;
             let targetCmId;
+            let droppedCmIds = [...cmIds];
             if (target.dataset.for == 'cm') {
                 const dropData = exporter.cmDraggableData(this.reactive.state, target.dataset.id);
                 targetSectionId = dropData.sectionid;
@@ -390,11 +429,49 @@ export default class extends BaseComponent {
                 targetSectionId = target.dataset.id;
                 targetCmId = section?.cmlist[0];
             }
-            this.reactive.dispatch('cmMove', cmIds, targetSectionId, targetCmId);
+            const section = this.reactive.get('section', targetSectionId);
+            if (section.component) {
+                // Remove cmIds which are not allowed to be moved to this delegated section (mostly
+                // all other delegated cm).
+                droppedCmIds = droppedCmIds.filter(cmId => {
+                    const cmInfo = this.reactive.get('cm', cmId);
+                    return !cmInfo.hasdelegatedsection;
+                });
+            }
+            if (droppedCmIds.length === 0) {
+                return; // No cm to move.
+            }
+            this.reactive.dispatch('cmMove', droppedCmIds, targetSectionId, targetCmId);
             this._destroyModal(modal, editTools);
         });
 
         pendingModalReady.resolve();
+    }
+
+    /**
+     * Expand all the modal tree branches that contains the element.
+     *
+     * @private
+     * @param {HTMLElement} modalBody the modal body element
+     * @param {HTMLElement} element the element to display
+     */
+    _expandCmMoveModalParentSections(modalBody, element) {
+        const sectionnode = element.closest(this.selectors.SECTIONNODE);
+        if (!sectionnode) {
+            return;
+        }
+
+        const toggler = sectionnode.querySelector(this.selectors.MODALTOGGLER);
+        let collapsibleId = toggler.dataset.target ?? toggler.getAttribute('href');
+        if (collapsibleId) {
+            // We cannot be sure we have # in the id element name.
+            collapsibleId = collapsibleId.replace('#', '');
+            const expandNode = modalBody.querySelector(`#${collapsibleId}`);
+            new Collapse(expandNode, {toggle: false}).show();
+        }
+
+        // Section are a tree structure, we need to expand all the parents.
+        this._expandCmMoveModalParentSections(modalBody, sectionnode.parentElement);
     }
 
     /**
@@ -406,6 +483,17 @@ export default class extends BaseComponent {
     async _requestAddSection(target, event) {
         event.preventDefault();
         this.reactive.dispatch('addSection', target.dataset.id ?? 0);
+    }
+
+    /**
+     * Handle a create subsection request.
+     *
+     * @param {Element} target the dispatch action element
+     * @param {Event} event the triggered event
+     */
+    async _requestAddModule(target, event) {
+        event.preventDefault();
+        this.reactive.dispatch('addModule', target.dataset.modname, target.dataset.sectionnum, target.dataset.beforemod);
     }
 
     /**
@@ -515,6 +603,23 @@ export default class extends BaseComponent {
     }
 
     /**
+     * Handle a course permalink modal request.
+     *
+     * @param {Element} target the dispatch action element
+     * @param {Event} event the triggered event
+     */
+    _requestPermalink(target, event) {
+        event.preventDefault();
+        ModalCopyToClipboard.create(
+            {
+                text: target.getAttribute('href'),
+            },
+            getString('sectionlink', 'course')
+        );
+        return;
+    }
+
+    /**
      * Handle a course module duplicate request.
      *
      * @param {Element} target the dispatch action element
@@ -546,17 +651,31 @@ export default class extends BaseComponent {
 
         let bodyText = null;
         let titleText = null;
+        let delegatedsection = null;
         if (cmIds.length == 1) {
             const cmInfo = this.reactive.get('cm', cmIds[0]);
-            titleText = getString('cmdelete_title', 'core_courseformat');
-            bodyText = getString(
-                'cmdelete_info',
-                'core_courseformat',
-                {
-                    type: cmInfo.modname,
-                    name: cmInfo.name,
-                }
-            );
+            if (cmInfo.hasdelegatedsection) {
+                delegatedsection = cmInfo.delegatesectionid;
+                titleText = this.reactive.getFormatString('cmdelete_subsectiontitle');
+                bodyText = getString(
+                    'sectiondelete_info',
+                    'core_courseformat',
+                    {
+                        type: cmInfo.modname,
+                        name: cmInfo.name,
+                    }
+                );
+            } else {
+                titleText = this.reactive.getFormatString('cmdelete_title');
+                bodyText = getString(
+                    'cmdelete_info',
+                    'core_courseformat',
+                    {
+                        type: cmInfo.modname,
+                        name: cmInfo.name,
+                    }
+                );
+            }
         } else {
             titleText = getString('cmsdelete_title', 'core_courseformat');
             bodyText = getString(
@@ -578,6 +697,13 @@ export default class extends BaseComponent {
                 e.preventDefault();
                 modal.destroy();
                 this.reactive.dispatch('cmDelete', cmIds);
+                if (cmIds.length == 1 && delegatedsection && target.baseURI.includes('section.php')) {
+                    // Redirect to the course main page if the subsection is the current page.
+                    let parameters = new URLSearchParams(window.location.search);
+                    if (parameters.has('id') && parameters.get('id') == delegatedsection) {
+                        this._dispatchSectionDelete([delegatedsection], target);
+                    }
+                }
             }
         );
     }
@@ -678,12 +804,30 @@ export default class extends BaseComponent {
      * @param {boolean} locked the new locked value.
      */
     _setAddSectionLocked(locked) {
-        const targets = this.getElements(this.selectors.ADDSECTION);
+        const targets = this.getElements(this.selectors.ADDSECTIONREGION);
         targets.forEach(element => {
             element.classList.toggle(this.classes.DISABLED, locked);
-            element.classList.toggle(this.classes.ITALIC, locked);
-            this.setElementLocked(element, locked);
+            const addSectionElement = element.querySelector(this.selectors.ADDSECTION);
+            addSectionElement.classList.toggle(this.classes.DISABLED, locked);
+            this.setElementLocked(addSectionElement, locked);
+            // We tweak the element to show a tooltip as a title attribute.
+            if (locked) {
+                getString('sectionaddmax', 'core_courseformat')
+                    .then((text) => addSectionElement.setAttribute('title', text))
+                    .catch(Notification.exception);
+                addSectionElement.style.pointerEvents = null; // Unlocks the pointer events.
+                addSectionElement.style.userSelect = null; // Unlocks the pointer events.
+            } else {
+                addSectionElement.setAttribute('title', addSectionElement.dataset.addSections);
+            }
         });
+        const courseAddSection = this.getElement(this.selectors.COURSEADDSECTION);
+        if (courseAddSection) {
+            const addSection = courseAddSection.querySelector(this.selectors.ADDSECTION);
+            addSection.classList.toggle(this.classes.DISPLAYNONE, locked);
+            const noMoreSections = courseAddSection.querySelector(this.selectors.MAXSECTIONSWARNING);
+            noMoreSections.classList.toggle(this.classes.DISPLAYNONE, !locked);
+        }
     }
 
     /**

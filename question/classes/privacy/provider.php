@@ -169,7 +169,7 @@ class provider implements
         ]);
 
         foreach ($quba->get_attempt_iterator() as $qa) {
-            $question = $qa->get_question(false);
+            $question = $qa->get_question();
             $slotno = $qa->get_slot();
             $questionnocontext = array_merge($questionscontext, [$slotno]);
 
@@ -302,7 +302,7 @@ class provider implements
                             $step->get_id()
                         );
 
-                    $stepdata->comment = $qa->get_behaviour(false)->format_comment($comment, $commentformat);
+                    $stepdata->comment = $qa->get_behaviour()->format_comment($comment, $commentformat);
                 }
 
                 // Export any response files associated with this step.
@@ -414,7 +414,7 @@ class provider implements
      * @param   int|null    $contextid  An optional context id, in case the $sql query is not already filtered by that.
      */
     public static function get_users_in_context_from_sql(userlist $userlist, string $prefix, string $insql, $params,
-            int $contextid = null) {
+            ?int $contextid = null) {
 
         $sql = "SELECT {$prefix}_qas.userid
                   FROM {question_attempt_steps} {$prefix}_qas

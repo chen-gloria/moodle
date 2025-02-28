@@ -40,6 +40,7 @@ $string['activityheader'] = 'Activity menu';
 $string['activitymodule'] = 'Activity module';
 $string['activitymodules'] = 'Activity modules';
 $string['activitynotready'] = 'Activity not ready yet';
+$string['activityorresource'] = 'Activity or resource';
 $string['activityreport'] = 'Activity report';
 $string['activityreports'] = 'Activity reports';
 $string['activityselect'] = 'Select this activity to be moved elsewhere';
@@ -54,6 +55,7 @@ $string['addadmin'] = 'Add admin';
 $string['addblock'] = 'Add a block';
 $string['addcomment'] = 'Add a comment...';
 $string['addcondition'] = 'Add condition';
+$string['addcontent'] = 'Add content';
 $string['addcountertousername'] = 'Create user by adding number to username';
 $string['addcreator'] = 'Add course creator';
 $string['adddots'] = 'Add...';
@@ -215,10 +217,13 @@ $string['backuptakealook'] = 'Please take a look at your backup logs in:
 $string['backupuserfileshelp'] = 'Choose whether user files (eg profile images) should be included in automated backups';
 $string['backupversion'] = 'Backup version';
 $string['badges'] = 'Badges';
+$string['between'] = 'Between';
 $string['block'] = 'Block';
 $string['blockconfiga'] = 'Configuring a {$a} block';
 $string['blockconfigbad'] = 'This block has not been implemented correctly and thus cannot provide a configuration interface.';
 $string['blocks'] = 'Blocks';
+$string['blocks_main'] = 'Main content blocks';
+$string['blocks_supplementary'] = 'Supplementary blocks';
 $string['blocksaddedit'] = 'Add/Edit blocks';
 $string['blockseditoff'] = 'Blocks editing off';
 $string['blocksediton'] = 'Blocks editing on';
@@ -280,7 +285,6 @@ $string['collapsecategory'] = 'Collapse {$a}';
 $string['comebacklater'] = 'Please come back later.';
 $string['commentincontext'] = 'Find this comment in context';
 $string['comments'] = 'Comments';
-$string['commentscount'] = 'Comments ({$a})';
 $string['commentsnotenabled'] = 'Comments feature is not enabled';
 $string['commentsrequirelogin'] = 'You need to log in to view the comments.';
 $string['comparelanguage'] = 'Compare and edit current language';
@@ -296,6 +300,7 @@ $string['confirmednot'] = 'Your registration has not yet been confirmed. Please 
 $string['confirmcheckfull'] = 'Are you absolutely sure you want to confirm {$a} ?';
 $string['confirmcoursemove'] = 'Are you sure you want to move this course ({$a->course}) into this category ({$a->category})?';
 $string['considereddigitalminor'] = 'You are too young to create an account on this site.';
+$string['contactsbyrolelist'] = '{$a->role}: {$a->contacts}';
 $string['content'] = 'Content';
 $string['contentexport_aboutthiscourse'] = 'Course summary';
 $string['contentexport_coursesummary'] = 'This file is part of the content downloaded from <a href="{$a->courselink}">{$a->coursename}</a>.';
@@ -338,13 +343,14 @@ $string['copyrightnotice'] = 'Copyright notice';
 $string['coresystem'] = 'System';
 $string['cost'] = 'Cost';
 $string['costdefault'] = 'Default cost';
+$string['count_of_total'] = '<strong>{$a->count}</strong> of {$a->total}';
 $string['counteditems'] = '{$a->count} {$a->items}';
 $string['country'] = 'Country';
 $string['course'] = 'Course';
 $string['courseheader'] = 'Course menu';
 $string['courseadministration'] = 'Course administration';
-$string['courseapprovedemail'] = 'Your requested course, {$a->name}, has been approved and you have been made a {$a->teacher}.  To access your new course, go to {$a->url}';
-$string['courseapprovedemail2'] = 'Your requested course, {$a->name}, has been approved.  To access your new course, go to {$a->url}';
+$string['courseapprovedemail'] = 'Your requested course is approved, <a href="{$a->url}">{$a->name}</a>, and you are a {$a->teacher}.';
+$string['courseapprovedemail2'] = 'Your requested course is approved: <a href="{$a->url}">{$a->name}</a>.';
 $string['courseapprovedfailed'] = 'Failed to save the course as approved!';
 $string['courseapprovedsubject'] = 'Your course has been approved!';
 $string['courseavailable'] = 'This course is available to students';
@@ -497,6 +503,8 @@ $string['dataformats'] = 'Data formats';
 $string['date'] = 'Date';
 $string['datemostrecentfirst'] = 'Date - most recent first';
 $string['datemostrecentlast'] = 'Date - most recent last';
+$string['datetimefilterafter'] = '{$a->title} after';
+$string['datetimefilterbefore'] = '{$a->title} before';
 $string['day'] = 'day';
 $string['days'] = 'days';
 $string['decodinginternallinks'] = 'Decoding internal links';
@@ -607,7 +615,7 @@ $string['editcategorythis'] = 'Edit this category';
 $string['editcoursesettings'] = 'Edit course settings';
 $string['editsettings'] = 'Edit settings';
 $string['editfiles'] = 'Edit files';
-$string['editgroupprofile'] = 'Edit group profile';
+$string['editgroupprofile'] = 'Edit group description';
 $string['editingteachershort'] = 'Editor';
 $string['editmode'] = 'Edit mode';
 $string['editlock'] = 'This value cannot be edited!';
@@ -644,7 +652,7 @@ $string['emailalreadysent'] = 'A password reset email has already been sent. Ple
 $string['emailactive'] = 'Email activated';
 $string['emailagain'] = 'Email (again)';
 $string['emailconfirm'] = 'Confirm your account';
-$string['emailconfirmation'] = 'Hi,
+$string['emailconfirmation'] = 'Hi {$a->firstname},
 
 A new account has been requested at \'{$a->sitename}\'
 using your email address.
@@ -700,7 +708,7 @@ $string['emailcharset'] = 'Email charset';
 $string['emailmustbereal'] = 'Note: your email address must be a real one';
 $string['emailnotallowed'] = 'Email addresses in these domains are not allowed ({$a})';
 $string['emailnotfound'] = 'The email address was not found in the database';
-$string['emailonlyallowed'] = 'This email is not one of those that are allowed ({$a})';
+$string['emailonlyallowed'] = 'This email cannot be used. Allowed email domains are: {$a}.';
 $string['emailpasswordconfirmation'] = 'Hi {$a->firstname},
 
 Someone (probably you) has requested a new password for your
@@ -827,6 +835,7 @@ $string['eventcoursemodulecreated'] = 'Course module created';
 $string['eventcoursemoduledeleted'] = 'Course module deleted';
 $string['eventcoursemoduleupdated'] = 'Course module updated';
 $string['eventcoursemoduleviewed'] = 'Course module viewed';
+$string['eventcourseoverviewviewed'] = 'Course activities overview page viewed';
 $string['eventcoursessearched'] = 'Courses searched';
 $string['eventcourseresetended'] = 'Course reset ended';
 $string['eventcourseresetstarted'] = 'Course reset started';
@@ -891,7 +900,6 @@ $string['failedtaskbody'] = '<p>Hi {$a->firstname},</p>
 <p>The task <b>{$a->taskname}</b> has failed multiple times and requires attention.</p>
 <p><a href="{$a->link}">See task</a></p>';
 $string['failedtasksubject'] = 'Task failed: {$a}';
-$string['failedtaskcontexturlname'] = 'Status report';
 $string['feedback'] = 'Feedback';
 $string['file'] = 'File';
 $string['fileexists'] = 'There is already a file called {$a}';
@@ -1169,6 +1177,7 @@ $string['indicator:userforumstracking'] = 'User is tracking forums';
 $string['indicator:userforumstracking_help'] = 'This indicator represents whether or not the student has tracking turned on in the forums.';
 $string['info'] = 'Information';
 $string['inprogress'] = 'In progress';
+$string['insertcontentbefore'] = 'Insert content before \'{$a->activityname}\'';
 $string['insertresourceoractivitybefore'] = 'Insert an activity or resource before \'{$a->activityname}\'';
 $string['institution'] = 'Institution';
 $string['instudentview'] = 'in student view';
@@ -1483,25 +1492,6 @@ $string['newloginnotificationbodyfull'] = '<p>Hi {$a->userfullname},</p>
 $string['newpassword'] = 'New password';
 $string['newpassword_help'] = 'Enter a new password or leave blank to keep current password.';
 $string['newpasswordfromlost'] = '<strong>NOTICE:</strong> Your <strong>Current password</strong> will have been sent to you in the <strong>second</strong> of the two emails sent as part of the lost password recovery process. Make sure you have received your replacement password before continuing with this screen.';
-$string['newpasswordtext'] = 'Hi {$a->firstname},
-
-Your account password at \'{$a->sitename}\' has been reset
-and you have been issued with a new temporary password.
-
-Your current login information is now:
-   username: {$a->username}
-   password: {$a->newpassword}
-
-Please go to this page to change your password:
-   {$a->link}
-
-In most mail programs, this should appear as a blue link
-which you can just click on.  If that doesn\'t work,
-then cut and paste the address into the address
-line at the top of your web browser window.
-
-Cheers from the \'{$a->sitename}\' administrator,
-{$a->signoff}';
 $string['newpicture'] = 'New picture';
 $string['newpicture_help'] = 'To add a new picture, browse and select an image (in JPG or PNG format) then click "Update profile". The image will be cropped to a square and resized to 100x100 pixels.';
 $string['newpictureusernotsetup'] = 'A profile picture can only be added once all required profile information has been saved.';
@@ -1518,24 +1508,17 @@ $string['newuser'] = 'New user';
 $string['newusernewpasswordsubj'] = 'New user account';
 $string['newusernewpasswordtext'] = 'Hi {$a->firstname},
 
-A new account has been created for you at \'{$a->sitename}\'
-and you have been issued with a new temporary password.
+An account has been created for you at \'{$a->sitename}\'.
 
-Your current login information is now:
    username: {$a->username}
    password: {$a->newpassword}
-             (you will have to change your password
-              when you login for the first time)
 
-To start using \'{$a->sitename}\', login at
+(You will be prompted to change your password when you log in for the first time.)
+
+To start using \'{$a->sitename}\', log in at
    {$a->link}
 
-In most mail programs, this should appear as a blue link
-which you can just click on.  If that doesn\'t work,
-then cut and paste the address into the address
-line at the top of your web browser window.
-
-Cheers from the \'{$a->sitename}\' administrator,
+If you need help, contact the site administrator,
 {$a->signoff}';
 $string['newusers'] = 'New users';
 $string['newwindow'] = 'New window';
@@ -1573,10 +1556,6 @@ $string['nopotentialcreators'] = 'No potential course creators';
 $string['nopotentialstudents'] = 'No potential students';
 $string['nopotentialteachers'] = 'No potential teachers';
 $string['norecentactivity'] = 'No recent activity';
-$string['noreplybouncemessage'] = 'You have replied to a no-reply email address. If you were attempting to reply to a forum post, please instead reply using the {$a} forums.
-
-Following is the content of your email:';
-$string['noreplybouncesubject'] = '{$a} - bounced email.';
 $string['noreplyname'] = 'Do not reply to this email';
 $string['noresetrecord'] = 'There is no record of that reset request. Please initiate a new password reset request.';
 $string['noresults'] = 'No results';
@@ -1709,7 +1688,7 @@ $string['pluginsetup'] = 'Setting up plugin tables';
 $string['policyaccept'] = 'I understand and agree';
 $string['policyagree'] = 'You must agree to this policy to continue using this site.  Do you agree?';
 $string['policyagreement'] = 'Site policy agreement';
-$string['policyagreementclick'] = 'Link to site policy agreement';
+$string['policyagreementclick'] = 'Site policy agreement';
 $string['popup'] = 'popup';
 $string['popupwindow'] = 'Open file in new window';
 $string['popupwindowname'] = 'Popup window';
@@ -1865,7 +1844,7 @@ $string['resetcourseconfirm'] = 'Reset course?';
 $string['resetcoursewarning'] = 'Are you sure you want to reset the course \'{$a}\'?
 <br/><br/>
 This will delete the selected data and reset the course back to its original state. You can\'t undo this action.';
-$string['resetinfo'] = 'This feature allows you to clear all user data and reset the course to its original state. Course activities and settings will remain untouched.';
+$string['resetinfo'] = 'This feature allows you to clear all user data and reset the course to its original state. Course activities and settings remain unchanged.';
 $string['resetinfoselect'] = 'Select the data you want to delete or reset from the categories below:';
 $string['resetnotimplemented'] = 'Reset not supported';
 $string['resetnotimplementedinfo'] = 'These activities can\'t be reset:';
@@ -1879,6 +1858,7 @@ $string['resortsubcategoriesby'] = 'Sort subcategories by {$a} ascending';
 $string['resortsubcategoriesbyreverse'] = 'Sort subcategories by {$a} descending';
 $string['resortcourses'] = 'Sort courses';
 $string['resource'] = 'Resource';
+$string['resource_type'] = 'Resource type';
 $string['resourcedisplayauto'] = 'Automatic';
 $string['resourcedisplaydownload'] = 'Force download';
 $string['resourcedisplayembed'] = 'Embed';
@@ -1980,6 +1960,7 @@ $string['secretalreadyused'] = 'Change password confirmation link was already us
 $string['secs'] = 'secs';
 $string['section'] = 'Section';
 $string['sectionactionnotsupported'] = 'Section action "{$a}" is not supported here';
+$string['subsectionmoveerror'] = 'Cannot move this subsection on another subsection';
 $string['sectionname'] = 'Section name';
 $string['sectionoutline'] = 'Section outline';
 $string['sections'] = 'Sections';
@@ -1998,6 +1979,7 @@ $string['selectallusersonpage'] = 'Select all users on this page';
 $string['selectalluserswithcount'] = 'Select all {$a} users';
 $string['selectamodule'] = 'Please select an activity module';
 $string['selectanoptions'] = 'Select an option';
+$string['selectdates'] = 'Select dates';
 $string['selectdefault'] = 'Select default';
 $string['selectedfile'] = 'Selected file';
 $string['selectedcategories'] = 'Selected categories';
@@ -2021,6 +2003,9 @@ $string['senddetails'] = 'Send my details via email';
 $string['sent'] = 'Sent';
 $string['separate'] = 'Separate';
 $string['separateandconnected'] = 'Separate and Connected ways of knowing';
+$string['separateandconnected1'] = 'Mostly separate knowing';
+$string['separateandconnected2'] = 'Separate and connected';
+$string['separateandconnected3'] = 'Mostly connected knowing';
 $string['separateandconnectedinfo'] = 'The scale based on the theory of separate and connected knowing. This theory describes two different ways that we can evaluate and learn about the things we see and hear.<ul><li><strong>Separate knowers</strong> remain as objective as possible without including feelings and emotions. In a discussion with other people, they like to defend their own ideas, using logic to find holes in opponent\'s ideas.</li><li><strong>Connected knowers</strong> are more sensitive to other people. They are skilled at empathy and tend to listen and ask questions until they feel they can connect and "understand things from their point of view". They learn by trying to share the experiences that led to the knowledge they find in other people.</li></ul>';
 $string['servererror'] = 'An error occurred whilst communicating with the server';
 $string['serverlocaltime'] = 'Server\'s local time';
@@ -2410,7 +2395,7 @@ $string['welcometocoursetext'] = 'Welcome to {$a->coursename}!
 
 If you have not done so already, you should edit your profile page so that we can learn more about you:
 
-<a href="{$a->profileurl}">{$a->profileurl}<a>';
+<a href="{$a->profileurl}">{$a->profileurl}</a>';
 $string['whatforlink'] = 'What do you want to do with the link?';
 $string['whatforpage'] = 'What do you want to do with the text?';
 $string['whatisyourage'] = 'What is your age?';
@@ -2519,6 +2504,33 @@ $string['coursesearch_help'] = 'You can search for multiple words at once and ca
 * -word - don\'t include results containing this word.';
 
 // Deprecated since Moodle 4.5.
+$string['commentscount'] = 'Comments ({$a})';
 $string['datechanged'] = 'Date changed';
+$string['newpasswordtext'] = 'Hi {$a->firstname},
+
+Your account password at \'{$a->sitename}\' has been reset
+and you have been issued with a new temporary password.
+
+Your current login information is now:
+   username: {$a->username}
+   password: {$a->newpassword}
+
+Please go to this page to change your password:
+   {$a->link}
+
+In most mail programs, this should appear as a blue link
+which you can just click on.  If that doesn\'t work,
+then cut and paste the address into the address
+line at the top of your web browser window.
+
+Cheers from the \'{$a->sitename}\' administrator,
+{$a->signoff}';
+$string['noreplybouncemessage'] = 'You have replied to a no-reply email address. If you were attempting to reply to a forum post, please instead reply using the {$a} forums.
+
+Following is the content of your email:';
+$string['noreplybouncesubject'] = '{$a} - bounced email.';
 $string['registrationcontactno'] = 'No, I do not want to be contacted by other people';
 $string['registrationcontactyes'] = 'Yes, provide a form for other Moodlers to contact me';
+
+// Deprecated since Moodle 5.0.
+$string['failedtaskcontexturlname'] = 'Status report';

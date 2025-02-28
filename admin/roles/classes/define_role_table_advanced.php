@@ -544,7 +544,7 @@ class core_role_define_role_table_advanced extends core_role_capability_table_wi
             $options[$type] = get_string('archetype'.$type, 'role');
         }
         return html_writer::select($options, 'archetype', $this->role->archetype, false,
-            array('class' => 'custom-select'));
+            ['class' => 'form-select']);
     }
 
     protected function get_assignable_levels_control() {
@@ -655,7 +655,7 @@ class core_role_define_role_table_advanced extends core_role_capability_table_wi
             echo "</label>\n";
         }
         if ($helpicon) {
-            echo '<span class="float-sm-right text-nowrap">'.$helpicon.'</span>';
+            echo '<span class="float-sm-end text-nowrap">'.$helpicon.'</span>';
         }
         echo '</div>';
         if (isset($this->errors[$name])) {

@@ -27,7 +27,7 @@ use ltiservice_gradebookservices\local\service\gradebookservices;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @coversDefaultClass \mod_lti\service\gradebookservices\local\gradebookservices
  */
-class gradebookservices_test extends \advanced_testcase {
+final class gradebookservices_test extends \advanced_testcase {
     /**
      * Load the necessary libs for the tests.
      */
@@ -379,7 +379,7 @@ class gradebookservices_test extends \advanced_testcase {
      *
      */
     private function create_standalone_lineitem(int $courseid, int $typeid, ?string $resourceid,
-            ?string $tag, int $ltiinstanceid = null): void {
+            ?string $tag, ?int $ltiinstanceid = null): void {
         $gbservice = new gradebookservices();
         $gbservice->add_standalone_lineitem($courseid,
             "manualtest",

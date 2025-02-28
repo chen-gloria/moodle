@@ -529,6 +529,15 @@ $capabilities = array(
         )
     ),
 
+    'moodle/user:viewprofilepictures' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'guest' => CAP_ALLOW,
+            'user' => CAP_ALLOW,
+        ],
+    ],
+
     'moodle/user:viewalldetails' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'read',
@@ -1015,6 +1024,17 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
+    'moodle/course:viewoverview' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'student' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 
     'moodle/course:changefullname' => array(
 
@@ -2629,6 +2649,24 @@ $capabilities = array(
         ]
     ],
 
+    'moodle/contentbank:configurecustomfields' => [
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    'moodle/contentbank:changelockedcustomfields' => [
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     // Allow users to download course content.
     'moodle/course:downloadcoursecontent' => [
         'captype' => 'read',
@@ -2755,6 +2793,49 @@ $capabilities = array(
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
             'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    // Set a users acceptance of the AI policy.
+    'moodle/ai:fetchanyuserpolicystatus' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'user' => CAP_ALLOW,
+        ],
+    ],
+    // Set a users acceptance of the AI policy.
+    'moodle/ai:acceptpolicy' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'user' => CAP_ALLOW,
+        ],
+    ],
+    // Get a users acceptance of the AI policy.
+    'moodle/ai:fetchpolicy' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'user' => CAP_ALLOW,
+        ],
+    ],
+    // Allow managers to view the AI policy acceptance report.
+    'moodle/ai:viewaipolicyacceptancereport' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+    // Allow managers to view the AI usage report.
+    'moodle/ai:viewaiusagereport' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
             'manager' => CAP_ALLOW,
         ],
     ],

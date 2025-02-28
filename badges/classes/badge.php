@@ -14,16 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Badge assertion library.
- *
- * @package    core
- * @subpackage badges
- * @copyright  2012 onwards Totara Learning Solutions Ltd {@link http://www.totaralms.com/}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @author     Yuliya Bozhko <yuliya.bozhko@totaralms.com>
- */
-
 namespace core_badges;
 
 defined('MOODLE_INTERNAL') || die();
@@ -44,8 +34,10 @@ use stdClass;
 /**
  * Class that represents badge.
  *
+ * @package    core_badges
  * @copyright  2012 onwards Totara Learning Solutions Ltd {@link http://www.totaralms.com/}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @author     Yuliya Bozhko <yuliya.bozhko@totaralms.com>
  */
 class badge {
     /** @var int Badge id */
@@ -114,15 +106,6 @@ class badge {
     /** @var string What language is this badge written in. */
     public $language;
 
-    /** @var string The author of the image for this badge. */
-    public $imageauthorname;
-
-    /** @var string The email of the author of the image for this badge. */
-    public $imageauthoremail;
-
-    /** @var string The url of the author of the image for this badge. */
-    public $imageauthorurl;
-
     /** @var string The caption of the image for this badge. */
     public $imagecaption;
 
@@ -166,14 +149,6 @@ class badge {
             if (property_exists($this, $field)) {
                 $this->{$field} = $value;
             }
-        }
-
-        if (badges_open_badges_backpack_api() != OPEN_BADGES_V1) {
-            // For Open Badges 2 we need to use a single site issuer with no exceptions.
-            $issuer = badges_get_default_issuer();
-            $this->issuername = $issuer['name'];
-            $this->issuercontact = $issuer['email'];
-            $this->issuerurl = $issuer['url'];
         }
 
         $this->criteria = self::get_criteria();
@@ -962,25 +937,14 @@ class badge {
      * @return array Issuer informations of the badge.
      */
     public function get_badge_issuer(?int $obversion = null) {
-        global $DB;
-
-        $issuer = [];
-        if ($obversion == OPEN_BADGES_V1) {
-            $data = $DB->get_record('badge', ['id' => $this->id]);
-            $issuer['name'] = $data->issuername;
-            $issuer['url'] = $data->issuerurl;
-            $issuer['email'] = $data->issuercontact;
-        } else {
-            $issuer['name'] = $this->issuername;
-            $issuer['url'] = $this->issuerurl;
-            $issuer['email'] = $this->issuercontact;
-            $issuer['@context'] = OPEN_BADGES_V2_CONTEXT;
-            $issueridurl = new moodle_url('/badges/issuer_json.php', array('id' => $this->id));
-            $issuer['id'] = $issueridurl->out(false);
-            $issuer['type'] = OPEN_BADGES_V2_TYPE_ISSUER;
-        }
-
-        return $issuer;
+        return [
+            'name' => $this->issuername,
+            'url' => $this->issuerurl,
+            'email' => $this->issuercontact,
+            '@context' => OPEN_BADGES_V2_CONTEXT,
+            'id' => (new moodle_url('/badges/issuer_json.php', ['id' => $this->id]))->out(false),
+            'type' => OPEN_BADGES_V2_TYPE_ISSUER,
+        ];
     }
 
     /**
@@ -1012,25 +976,14 @@ class badge {
         $fordb->version = $data->version;
         $fordb->language = $data->language;
         $fordb->description = $data->description;
-        $fordb->imageauthorname = $data->imageauthorname;
-        $fordb->imageauthoremail = $data->imageauthoremail;
-        $fordb->imageauthorurl = $data->imageauthorurl;
         $fordb->imagecaption = $data->imagecaption;
         $fordb->timecreated = $now;
         $fordb->timemodified = $now;
         $fordb->usercreated = $USER->id;
         $fordb->usermodified = $USER->id;
-
-        if (badges_open_badges_backpack_api() == OPEN_BADGES_V1) {
-            $fordb->issuername = $data->issuername;
-            $fordb->issuerurl = $data->issuerurl;
-            $fordb->issuercontact = $data->issuercontact;
-        } else {
-            $url = parse_url($CFG->wwwroot);
-            $fordb->issuerurl = $url['scheme'] . '://' . $url['host'];
-            $fordb->issuername = $CFG->badges_defaultissuername;
-            $fordb->issuercontact = $CFG->badges_defaultissuercontact;
-        }
+        $fordb->issuername = $data->issuername;
+        $fordb->issuerurl = $data->issuerurl;
+        $fordb->issuercontact = $data->issuercontact;
 
         if (!property_exists($data, 'expiry')) {
             $data->expiry = 0;
@@ -1082,16 +1035,11 @@ class badge {
         $this->version = trim($data->version);
         $this->language = $data->language;
         $this->description = $data->description;
-        $this->imageauthorname = $data->imageauthorname;
-        $this->imageauthoremail = $data->imageauthoremail;
-        $this->imageauthorurl = $data->imageauthorurl;
         $this->imagecaption = $data->imagecaption;
         $this->usermodified = $USER->id;
-        if (badges_open_badges_backpack_api() == OPEN_BADGES_V1) {
-            $this->issuername = $data->issuername;
-            $this->issuerurl = $data->issuerurl;
-            $this->issuercontact = $data->issuercontact;
-        }
+        $this->issuername = $data->issuername;
+        $this->issuerurl = $data->issuerurl;
+        $this->issuercontact = $data->issuercontact;
         $this->expiredate = ($data->expiry == 1) ? $data->expiredate : null;
         $this->expireperiod = ($data->expiry == 2) ? $data->expireperiod : null;
 

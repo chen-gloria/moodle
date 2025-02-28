@@ -39,9 +39,9 @@ require_once($CFG->dirroot . '/question/type/numerical/question.php');
  */
 class qtype_calculated extends question_type {
     /**
-     * @var string a placeholder is a letter, followed by almost any characters. (This should probably be restricted more.)
+     * @var string a placeholder is a letter, followed by zero or more alphanum chars (as well as space, - and _ for readability).
      */
-    const PLACEHOLDER_REGEX_PART = '[[:alpha:]][^>} <`{"\']*';
+    const PLACEHOLDER_REGEX_PART = '[[:alpha:]][[:alpha:][:digit:]\-_\s]*';
 
     /**
      * @var string REGEXP for a placeholder, wrapped in its {...} delimiters, with capturing brackets around the name.
@@ -781,13 +781,13 @@ class qtype_calculated extends question_type {
             }
             $menu1 = html_writer::label(get_string('lengthoption', 'qtype_calculated'),
                 'menucalclength', false, ['class' => 'accesshide']);
-            $menu1 .= html_writer::select($lengthoptions, 'calclength[]', $regs[4], null, ['class' => 'custom-select']);
+            $menu1 .= html_writer::select($lengthoptions, 'calclength[]', $regs[4], null, ['class' => 'form-select']);
 
             $options = ['uniform' => get_string('uniformbit', 'qtype_calculated'),
                 'loguniform' => get_string('loguniformbit', 'qtype_calculated')];
             $menu2 = html_writer::label(get_string('distributionoption', 'qtype_calculated'),
                 'menucalcdistribution', false, ['class' => 'accesshide']);
-            $menu2 .= html_writer::select($options, 'calcdistribution[]', $regs[1], null, ['class' => 'custom-select']);
+            $menu2 .= html_writer::select($options, 'calcdistribution[]', $regs[1], null, ['class' => 'form-select']);
             return '<input type="submit" class="btn btn-secondary" onclick="'
                 . "getElementById('addform').regenerateddefid.value='{$defid}'; return true;"
                 .'" value="'. get_string('generatevalue', 'qtype_calculated') . '"/><br/>'
@@ -1952,15 +1952,18 @@ function qtype_calculated_find_formula_errors($formula) {
     // Validates the formula submitted from the question edit page.
     // Returns false if everything is alright
     // otherwise it constructs an error message.
-    // Strip away dataset names. Use 1.0 to catch illegal concatenation like {a}{b}.
+    // Strip away dataset names. Use 1.0 to remove valid names, so illegal names can be identified later.
     $formula = preg_replace(qtype_calculated::PLACEHODLER_REGEX, '1.0', $formula);
 
     // Strip away empty space and lowercase it.
     $formula = strtolower(str_replace(' ', '', $formula));
 
-    $safeoperatorchar = '-+/*%>:^\~<?=&|!'; /* */
+    // Only mathematical operators are supported. Bitwise operators are not safe.
+    // Note: In this context, ^ is a bitwise operator (exponents are represented by **).
+    $safeoperatorchar = '-+/*%>:\~<?=!';
     $operatorornumber = "[{$safeoperatorchar}.0-9eE]";
 
+    // Validate mathematical functions in formula.
     while (preg_match("~(^|[{$safeoperatorchar},(])([a-z0-9_]*)" .
             "\\(({$operatorornumber}+(,{$operatorornumber}+((,{$operatorornumber}+)+)?)?)?\\)~",
             $formula, $regs)) {

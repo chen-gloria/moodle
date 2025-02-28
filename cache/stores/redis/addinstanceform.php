@@ -15,18 +15,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Redis Cache Store - Add instance form
- *
- * @package   cachestore_redis
- * @copyright 2013 Adam Durana
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->dirroot . '/cache/forms.php');
-
-/**
  * Form for adding instance of Redis Cache Store.
  *
  * @copyright   2013 Adam Durana
@@ -77,5 +65,10 @@ class cachestore_redis_addinstance_form extends cachestore_addinstance_form {
         $form->addHelpButton('compressor', 'usecompressor', 'cachestore_redis');
         $form->setDefault('compressor', cachestore_redis::COMPRESSOR_NONE);
         $form->setType('compressor', PARAM_INT);
+
+        $form->addElement('text', 'connectiontimeout', get_string('connectiontimeout', 'cachestore_redis'));
+        $form->addHelpButton('connectiontimeout', 'connectiontimeout', 'cachestore_redis');
+        $form->setDefault('connectiontimeout', cachestore_redis::CONNECTION_TIMEOUT);
+        $form->setType('connectiontimeout', PARAM_INT);
     }
 }

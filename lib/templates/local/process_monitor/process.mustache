@@ -34,16 +34,14 @@
 >
     <div class="d-flex flex-row align-items-center">
         <div class="p-2 uploadname text-truncate" data-for="name"> {{name}} </div>
-        <div class="ml-auto p-2 progressbar">
+        <div class="ms-auto p-2 progressbar">
             <progress value="{{percentage}}" max="100"></progress>
             <button
                 type="button"
-                class="d-none close"
+                class="d-none btn-close"
                 data-action="closeProcess"
                 aria-label="{{#str}}closebuttontitle, core{{/str}}"
-            >
-                <span aria-hidden="true">×</span>
-            </button>
+            ></button>
         </div>
     </div>
     <div class="d-none alert alert-danger" role="alert" data-for="error">

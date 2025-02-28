@@ -50,7 +50,7 @@ class sqlite3_pdo_moodle_database extends pdo_moodle_database {
     /**
      * Returns database family type - describes SQL dialect
      * Note: can be used before connect()
-     * @return string db family name (mysql, postgres, mssql, oracle, etc.)
+     * @return string db family name (mysql, postgres, mssql, etc.)
      */
     public function get_dbfamily() {
         return 'sqlite';
@@ -59,7 +59,7 @@ class sqlite3_pdo_moodle_database extends pdo_moodle_database {
     /**
      * Returns more specific database driver type
      * Note: can be used before connect()
-     * @return string db type mysqli, pgsql, oci, mssql, sqlsrv
+     * @return string db type mysqli, pgsql, mssql, sqlsrv
      */
     protected function get_dbtype() {
         return 'sqlite3';
@@ -86,7 +86,7 @@ class sqlite3_pdo_moodle_database extends pdo_moodle_database {
      *
      * @return bool success
      */
-    public function create_database($dbhost, $dbuser, $dbpass, $dbname, array $dboptions=null) {
+    public function create_database($dbhost, $dbuser, $dbpass, $dbname, ?array $dboptions=null) {
         global $CFG;
 
         $this->dbhost = $dbhost;
@@ -329,7 +329,7 @@ class sqlite3_pdo_moodle_database extends pdo_moodle_database {
      * @param array $conditions optional array $fieldname=>requestedvalue with AND in between
      * @return returns success.
      */
-    public function delete_records($table, array $conditions=null) {
+    public function delete_records($table, ?array $conditions=null) {
         if (is_null($conditions)) {
             return $this->execute("DELETE FROM {{$table}}");
         }

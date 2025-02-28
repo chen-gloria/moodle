@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__.'/moodle_database.php');
-require_once(__DIR__.'/moodle_read_slave_trait.php');
+require_once(__DIR__.'/moodle_read_replica_trait.php');
 require_once(__DIR__.'/pgsql_native_moodle_recordset.php');
 require_once(__DIR__.'/pgsql_native_moodle_temptables.php');
 
@@ -37,11 +37,11 @@ require_once(__DIR__.'/pgsql_native_moodle_temptables.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class pgsql_native_moodle_database extends moodle_database {
-    use moodle_read_slave_trait {
-        select_db_handle as read_slave_select_db_handle;
-        can_use_readonly as read_slave_can_use_readonly;
-        query_start as read_slave_query_start;
-        query_end as read_slave_query_end;
+    use moodle_read_replica_trait {
+        select_db_handle as read_replica_select_db_handle;
+        can_use_readonly as read_replica_can_use_readonly;
+        query_start as read_replica_query_start;
+        query_end as read_replica_query_end;
     }
 
     /** @var array $sslmodes */
@@ -87,7 +87,7 @@ class pgsql_native_moodle_database extends moodle_database {
     /**
      * Returns database family type - describes SQL dialect
      * Note: can be used before connect()
-     * @return string db family name (mysql, postgres, mssql, oracle, etc.)
+     * @return string db family name (mysql, postgres, mssql, etc.)
      */
     public function get_dbfamily() {
         return 'postgres';
@@ -96,7 +96,7 @@ class pgsql_native_moodle_database extends moodle_database {
     /**
      * Returns more specific database driver type
      * Note: can be used before connect()
-     * @return string db type mysqli, pgsql, oci, mssql, sqlsrv
+     * @return string db type mysqli, pgsql, mssql, sqlsrv
      */
     protected function get_dbtype() {
         return 'pgsql';
@@ -141,7 +141,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @throws moodle_exception
      * @throws dml_connection_exception if error
      */
-    public function raw_connect(string $dbhost, string $dbuser, string $dbpass, string $dbname, $prefix, array $dboptions=null): bool {
+    public function raw_connect(string $dbhost, string $dbuser, string $dbpass, string $dbname, $prefix, ?array $dboptions=null): bool {
         if ($prefix == '' and !$this->external) {
             //Enforce prefixes for everybody but mysql
             throw new dml_exception('prefixcannotbeempty', $this->get_dbfamily());
@@ -297,7 +297,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return void
      */
     protected function select_db_handle(int $type, string $sql): void {
-        $this->read_slave_select_db_handle($type, $sql);
+        $this->read_replica_select_db_handle($type, $sql);
 
         if (preg_match('/^DECLARE (crs\w*) NO SCROLL CURSOR/', $sql, $match)) {
             $cursor = $match[1];
@@ -318,7 +318,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return bool
      */
     protected function can_use_readonly(int $type, string $sql): bool {
-        // ... pg_*lock queries always go to master.
+        // ... pg_*lock queries always go to primary.
         if (preg_match('/\bpg_\w*lock/', $sql)) {
             return false;
         }
@@ -328,7 +328,7 @@ class pgsql_native_moodle_database extends moodle_database {
             return false;
         }
 
-        return $this->read_slave_can_use_readonly($type, $sql);
+        return $this->read_replica_can_use_readonly($type, $sql);
 
     }
 
@@ -341,7 +341,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return void
      */
     protected function query_start($sql, ?array $params, $type, $extrainfo=null) {
-        $this->read_slave_query_start($sql, $params, $type, $extrainfo);
+        $this->read_replica_query_start($sql, $params, $type, $extrainfo);
         // pgsql driver tends to send debug to output, we do not need that.
         $this->last_error_reporting = error_reporting(0);
     }
@@ -355,7 +355,7 @@ class pgsql_native_moodle_database extends moodle_database {
         // reset original debug level
         error_reporting($this->last_error_reporting);
         try {
-            $this->read_slave_query_end($result);
+            $this->read_replica_query_end($result);
             if ($this->savepointpresent &&
                     !in_array(
                         $this->last_type,
@@ -851,7 +851,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return bool true
      * @throws dml_exception A DML specific exception is thrown for any errors.
      */
-    public function execute($sql, array $params=null) {
+    public function execute($sql, ?array $params=null) {
         list($sql, $params, $type) = $this->fix_sql_params($sql, $params);
 
         if (strpos($sql, ';') !== false) {
@@ -883,7 +883,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return moodle_recordset instance
      * @throws dml_exception A DML specific exception is thrown for any errors.
      */
-    public function get_recordset_sql($sql, array $params=null, $limitfrom=0, $limitnum=0) {
+    public function get_recordset_sql($sql, ?array $params=null, $limitfrom=0, $limitnum=0) {
 
         list($limitfrom, $limitnum) = $this->normalise_limit_from_num($limitfrom, $limitnum);
 
@@ -1028,7 +1028,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return array of objects, or empty array if no records were found
      * @throws dml_exception A DML specific exception is thrown for any errors.
      */
-    public function get_records_sql($sql, array $params = null, $limitfrom = 0, $limitnum = 0) {
+    public function get_records_sql($sql, ?array $params = null, $limitfrom = 0, $limitnum = 0) {
         list($limitfrom, $limitnum) = $this->normalise_limit_from_num($limitfrom, $limitnum);
 
         if ($limitnum) {
@@ -1079,7 +1079,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return array of values
      * @throws dml_exception A DML specific exception is thrown for any errors.
      */
-    public function get_fieldset_sql($sql, array $params=null) {
+    public function get_fieldset_sql($sql, ?array $params=null) {
         list($sql, $params, $type) = $this->fix_sql_params($sql, $params);
 
         $this->query_start($sql, $params, SQL_QUERY_SELECT);
@@ -1405,7 +1405,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return bool true
      * @throws dml_exception A DML specific exception is thrown for any errors.
      */
-    public function set_field_select($table, $newfield, $newvalue, $select, array $params=null) {
+    public function set_field_select($table, $newfield, $newvalue, $select, ?array $params=null) {
 
         if ($select) {
             $select = "WHERE $select";
@@ -1444,7 +1444,7 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return bool true
      * @throws dml_exception A DML specific exception is thrown for any errors.
      */
-    public function delete_records_select($table, $select, array $params=null) {
+    public function delete_records_select($table, $select, ?array $params=null) {
         if ($select) {
             $select = "WHERE $select";
         }
@@ -1720,6 +1720,15 @@ class pgsql_native_moodle_database extends moodle_database {
      * @return bool
      */
     public function is_fulltext_search_supported() {
+        return true;
+    }
+
+    /**
+     * Postgresql supports the COUNT() window function and provides a performance improvement.
+     *
+     * @return bool
+     */
+    public function is_count_window_function_supported(): bool {
         return true;
     }
 }

@@ -12,7 +12,6 @@ Feature: Manage badges
       | language       | en                           |
       | description    | Test badge description       |
       | image          | badges/tests/behat/badge.png |
-      | imageauthorurl | http://author.example.com    |
       | imagecaption   | Test caption image           |
 
   Scenario: Copy a badge
@@ -23,9 +22,9 @@ Feature: Manage badges
     And I press "Save changes"
     And I click on "Back" "button"
     Then the following should exist in the "reportbuilder-table" table:
-      | Name             | Version | Badge status  |
-      | Badge #1         | 1.0     | Not available |
-      | Copy of Badge #1 | 1.0     | Not available |
+      | Name             | Badge status  |
+      | Badge #1         | Not available |
+      | Copy of Badge #1 | Not available |
 
   Scenario: Edit a badge
     Given I log in as "admin"
@@ -37,20 +36,22 @@ Feature: Manage badges
     And I press "Save changes"
     And I click on "Back" "button"
     Then the following should exist in the "reportbuilder-table" table:
-      | Name          | Version | Badge status  |
-      | New Badge #1  | 1.1     | Not available |
+      | Name          | Badge status  |
+      | New Badge #1  | Not available |
+    And I follow "New Badge #1"
+    And I should see "1.1"
 
   Scenario: Delete a badge
     Given I log in as "admin"
     And I navigate to "Badges > Manage badges" in site administration
     And I press "Delete" action in the "Badge #1" report row
     And I press "Delete and remove existing issued badges"
-    Then I should see "There are currently no badges available for users to earn"
+    Then I should see "There are no matching badges available for users to earn."
 
   Scenario Outline: Filter managed badges
     Given the following "core_badges > Badges" exist:
-      | name     | status | version |
-      | Badge #2 | 1      | 2.0     |
+      | name     | status | version | image                        |
+      | Badge #2 | 1      | 2.0     | badges/tests/behat/badge.png |
     And I log in as "admin"
     When I navigate to "Badges > Manage badges" in site administration
     And I click on "Filters" "button"
@@ -90,7 +91,10 @@ Feature: Manage badges
       | Badge #1  | Not available |
 
   Scenario: Award a badge
-    Given I log in as "admin"
+    Given the following "users" exist:
+      | username | firstname | lastname | email             |
+      | user1    | User      | One      | user1@example.com |
+    When I log in as "admin"
     And I navigate to "Badges > Manage badges" in site administration
     And I press "Edit" action in the "Badge #1" report row
     And I select "Criteria" from the "jump" singleselect
@@ -101,12 +105,17 @@ Feature: Manage badges
     And I press "Enable access" action in the "Badge #1" report row
     And I click on "Enable" "button" in the "Confirm" "dialogue"
     And I press "Award badge" action in the "Badge #1" report row
-    And I set the field "potentialrecipients[]" to "Admin User (moodle@example.com)"
+    And I set the field "potentialrecipients[]" to "Admin User (moodle@example.com),User One (user1@example.com)"
     And I press "Award badge"
     And I navigate to "Badges > Manage badges" in site administration
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "Badges" table:
       | Name      | Badge status  | Recipients |
-      | Badge #1  | Available     | 1          |
+      | Badge #1  | Available     | 2          |
+    And I click on "2" "link" in the "Badge #1" "table_row"
+    And the following should exist in the "Recipients" table:
+      | -1-        |
+      | Admin User |
+      | User One   |
 
   Scenario: View list of badges with recipients
     Given the following "users" exist:
@@ -114,9 +123,9 @@ Feature: Manage badges
       | user1    | User      | One      |
       | user2    | User      | Two      |
     And the following "core_badges > Badges" exist:
-      | name     | status |
-      | Badge #2 | 1      |
-      | Badge #3 | 1      |
+      | name     | status | image                        |
+      | Badge #2 | 1      | badges/tests/behat/badge.png |
+      | Badge #3 | 1      | badges/tests/behat/badge.png |
     And the following "core_badges > Issued badges" exist:
       | badge    | user  |
       | Badge #1 | user1 |
@@ -144,7 +153,6 @@ Feature: Manage badges
       | language       | en                           |
       | description    | Test badge description       |
       | image          | badges/tests/behat/badge.png |
-      | imageauthorurl | http://author.example.com    |
       | imagecaption   | Test caption image           |
     And I log in as "admin"
     And I navigate to "Badges > Add a new badge" in site administration

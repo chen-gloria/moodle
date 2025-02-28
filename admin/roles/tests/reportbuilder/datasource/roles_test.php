@@ -20,13 +20,8 @@ namespace core_role\reportbuilder\datasource;
 
 use core\context\course;
 use core_reportbuilder_generator;
-use core_reportbuilder_testcase;
 use core_reportbuilder\local\filters\{date, select, text};
-
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once("{$CFG->dirroot}/reportbuilder/tests/helpers.php");
+use core_reportbuilder\tests\core_reportbuilder_testcase;
 
 /**
  * Unit tests for roles datasource
@@ -104,6 +99,7 @@ final class roles_test extends core_reportbuilder_testcase {
         // Role.
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'role:name']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'role:shortname']);
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'role:archetype']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'role:description']);
 
         // Role assignment.
@@ -114,11 +110,20 @@ final class roles_test extends core_reportbuilder_testcase {
         $content = $this->get_custom_report_content($report->get('id'));
         $this->assertCount(1, $content);
 
-        [$rolename, $roleshortname, $roledescription, $timemodified, $component, $itemid] = array_values($content[0]);
+        [
+            $rolename,
+            $roleshortname,
+            $rolearchetype,
+            $roledescription,
+            $timemodified,
+            $component,
+            $itemid,
+        ] = array_values($content[0]);
 
         // Role.
         $this->assertEquals('Moocher (Manager)', $rolename);
         $this->assertEquals('manager', $roleshortname);
+        $this->assertEquals('ARCHETYPE: Manager', $rolearchetype);
         $this->assertEquals('Managers can access courses and modify them, but usually do not participate in them.',
             $roledescription);
 
@@ -144,7 +149,15 @@ final class roles_test extends core_reportbuilder_testcase {
             ], true],
             'Filter role name (no match)' => ['role:name', [
                 'role:name_operator' => select::EQUAL_TO,
-                'role:name_value' => -1,
+                'role:name_value' => $DB->get_field('role', 'id', ['shortname' => 'teacher']),
+            ], false],
+            'Filter role archetype' => ['role:archetype', [
+                'role:archetype_operator' => select::EQUAL_TO,
+                'role:archetype_value' => 'student',
+            ], true],
+            'Filter role archetype (no match)' => ['role:archetype', [
+                'role:archetype_operator' => select::EQUAL_TO,
+                'role:archetype_value' => 'teacher',
             ], false],
 
             // Role assignment.

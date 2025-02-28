@@ -16,7 +16,12 @@
 
 namespace qbank_managecategories;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->libdir . "/questionlib.php");
+
 use context;
+use core_question\category_manager;
 use core_question\local\bank\question_version_status;
 use moodle_exception;
 use html_writer;
@@ -33,7 +38,6 @@ use html_writer;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class helper {
-
     /**
      * Name of this plugin.
      */
@@ -42,18 +46,16 @@ class helper {
     /**
      * Remove stale questions from a category.
      *
-     * While questions should not be left behind when they are not used any more,
-     * it does happen, maybe via restore, or old logic, or uncovered scenarios. When
-     * this happens, the users are unable to delete the question category unless
-     * they move those stale questions to another one category, but to them the
-     * category is empty as it does not contain anything. The purpose of this function
-     * is to detect the questions that may have gone stale and remove them.
+     * This finds and removes any old-style random questions (qtype = random),
+     * or any questions that were deleted while they were in use by a quiz (status = hidden),
+     * but those usages have since been removed.
+     *
+     * If a category only contains stale questions, the users are unable to delete the question
+     * category unless they move those stale questions to another one category, but to them the
+     * category may appear empty. The purpose of this function is to detect the questions that
+     * may have gone stale and remove them.
      *
      * You will typically use this prior to checking if the category contains questions.
-     *
-     * The stale questions (unused and hidden to the user) handled are:
-     * - hidden questions
-     * - random questions
      *
      * @param int $categoryid The category ID.
      * @throws \dml_exception
@@ -82,15 +84,19 @@ class helper {
      * @param int $categoryid a category id.
      * @return bool
      * @throws \dml_exception
+     * @deprecated Since Moodle 4.5. Use core_question\category_manager::is_only_child_of_top_category_in_context instead.
+     * @todo Final removal in Moodle 6.0 MDL-80804
      */
+    #[\core\attribute\deprecated(
+        'core_question\category_manager::is_only_child_of_top_category_in_context',
+        since: 4.5,
+        reason: 'Moved to core namespace',
+        mdl: 'MDL-72397'
+    )]
     public static function question_is_only_child_of_top_category_in_context(int $categoryid): bool {
-        global $DB;
-        return 1 == $DB->count_records_sql("
-            SELECT count(*)
-              FROM {question_categories} c
-              JOIN {question_categories} p ON c.parent = p.id
-              JOIN {question_categories} s ON s.parent = c.parent
-             WHERE c.id = ? AND p.parent = 0", [$categoryid]);
+        \core\deprecation::emit_deprecation_if_present([__CLASS__, __FUNCTION__]);
+        $manager = new category_manager();
+        return $manager->is_only_child_of_top_category_in_context($categoryid);
     }
 
     /**
@@ -99,10 +105,19 @@ class helper {
      * @param int $categoryid a category id.
      * @return bool
      * @throws \dml_exception
+     * @deprecated Since Moodle 4.5. Use core_question\category_manager::is_top_category instead.
+     * @todo Final removal in Moodle 6.0 MDL-80804.
      */
+    #[\core\attribute\deprecated(
+        'core_question\category_manager::is_top_category',
+        since: 4.5,
+        reason: 'Moved to core namespace',
+        mdl: 'MDL-72397'
+    )]
     public static function question_is_top_category(int $categoryid): bool {
-        global $DB;
-        return 0 == $DB->get_field('question_categories', 'parent', ['id' => $categoryid]);
+        \core\deprecation::emit_deprecation_if_present([__CLASS__, __FUNCTION__]);
+        $manager = new category_manager();
+        return $manager->is_top_category($categoryid);
     }
 
     /**
@@ -111,17 +126,19 @@ class helper {
      * @param int $todelete a category id.
      * @throws \required_capability_exception
      * @throws \dml_exception|moodle_exception
+     * @deprecated Since Moodle 4.5. Use core_question\category_manager::can_delete_category instead.
+     * @todo Final removal in Moodle 6.0 MDL-80804.
      */
+    #[\core\attribute\deprecated(
+        'core_question\category_manager::can_delete_category',
+        since: 4.5,
+        reason: 'Moved to core namespace',
+        mdl: 'MDL-72397'
+    )]
     public static function question_can_delete_cat(int $todelete): void {
-        global $DB;
-        if (self::question_is_top_category($todelete)) {
-            throw new moodle_exception('cannotdeletetopcat', 'question');
-        } else if (self::question_is_only_child_of_top_category_in_context($todelete)) {
-            throw new moodle_exception('cannotdeletecate', 'question');
-        } else {
-            $contextid = $DB->get_field('question_categories', 'contextid', ['id' => $todelete]);
-            require_capability('moodle/question:managecategory', context::instance_by_id($contextid));
-        }
+        \core\deprecation::emit_deprecation_if_present([__CLASS__, __FUNCTION__]);
+        $manager = new category_manager();
+        $manager->require_can_delete_category($todelete);
     }
 
     /**
@@ -151,7 +168,11 @@ class helper {
         foreach ($categories[$id]->childids as $childid) {
             if ($childid != $nochildrenof) {
                 $newcategories = $newcategories + self::flatten_category_tree(
-                        $categories, $childid, $depth + 1, $nochildrenof);
+                    $categories,
+                    $childid,
+                    $depth + 1,
+                    $nochildrenof,
+                );
             }
         }
 
@@ -182,8 +203,10 @@ class helper {
         // categories from other courses, but not their parents.
         $toplevelcategoryids = [];
         foreach (array_keys($categories) as $id) {
-            if (!empty($categories[$id]->parent) &&
-                array_key_exists($categories[$id]->parent, $categories)) {
+            if (
+                !empty($categories[$id]->parent) &&
+                array_key_exists($categories[$id]->parent, $categories)
+            ) {
                 $categories[$categories[$id]->parent]->childids[] = $id;
             } else {
                 $toplevelcategoryids[] = $id;
@@ -194,7 +217,11 @@ class helper {
         $newcategories = [];
         foreach ($toplevelcategoryids as $id) {
             $newcategories = $newcategories + self::flatten_category_tree(
-                    $categories, $id, 0, $nochildrenof);
+                $categories,
+                $id,
+                0,
+                $nochildrenof,
+            );
         }
 
         return $newcategories;
@@ -213,22 +240,39 @@ class helper {
      *      default in the dropdown.
      * @param int $nochildrenof
      * @param bool $return to return the string of the select menu or echo that from the method
+     * @return ?string The HTML, or null if the $return is false.
      * @throws \coding_exception|\dml_exception
      */
-    public static function question_category_select_menu(array $contexts, bool $top = false, int $currentcat = 0,
-                                           string $selected = "", int $nochildrenof = -1, bool $return = false) {
-        $categoriesarray = self::question_category_options($contexts, $top, $currentcat,
-            false, $nochildrenof, false);
+    public static function question_category_select_menu(
+        array $contexts,
+        bool $top = false,
+        int $currentcat = 0,
+        string $selected = "",
+        int $nochildrenof = -1,
+        bool $return = false,
+    ): ?string {
+        $categoriesarray = self::question_category_options(
+            $contexts,
+            $top,
+            $currentcat,
+            false,
+            $nochildrenof,
+            false,
+        );
         $choose = '';
         $options = [];
         foreach ($categoriesarray as $group => $opts) {
             $options[] = [$group => $opts];
         }
-        $outputhtml = html_writer::label(get_string('questioncategory', 'core_question'),
-            'id_movetocategory', false, ['class' => 'accesshide']);
+        $outputhtml = html_writer::label(
+            get_string('questioncategory', 'core_question'),
+            'id_movetocategory',
+            false,
+            ['class' => 'accesshide'],
+        );
         $attrs = [
             'id' => 'id_movetocategory',
-            'class' => 'custom-select',
+            'class' => 'form-select',
             'data-action' => 'toggle',
             'data-togglegroup' => 'qbank',
             'data-toggle' => 'action',
@@ -239,6 +283,7 @@ class helper {
             return $outputhtml;
         } else {
             echo $outputhtml;
+            return null;
         }
     }
 
@@ -246,20 +291,38 @@ class helper {
      * Get all the category objects, including a count of the number of questions in that category,
      * for all the categories in the lists $contexts.
      *
-     * @param context $contexts
+     * @param string $contexts comma separated list of contextids
      * @param string $sortorder used as the ORDER BY clause in the select statement.
      * @param bool $top Whether to return the top categories or not.
      * @param int $showallversions 1 to show all versions not only the latest.
      * @return array of category objects.
      * @throws \dml_exception
      */
-    public static function get_categories_for_contexts($contexts, string $sortorder = 'parent, sortorder, name ASC',
-                                                       bool $top = false, int $showallversions = 0): array {
+    public static function get_categories_for_contexts(
+        string $contexts,
+        string $sortorder = 'parent, sortorder, name ASC',
+        bool $top = false,
+        int $showallversions = 0,
+    ): array {
         global $DB;
-        $topwhere = $top ? '' : 'AND c.parent <> 0';
-        $statuscondition = "AND (qv.status = '". question_version_status::QUESTION_STATUS_READY . "' " .
-            " OR qv.status = '" . question_version_status::QUESTION_STATUS_DRAFT . "' )";
 
+        $contextids = explode(',', $contexts);
+        foreach ($contextids as $contextid) {
+            $context = context::instance_by_id($contextid);
+            if ($context->contextlevel === CONTEXT_MODULE) {
+                $validcontexts[] = $contextid;
+            }
+        }
+        if (empty($validcontexts)) {
+            return [];
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($validcontexts);
+
+        $topwhere = $top ? '' : 'AND c.parent <> 0';
+        $statuscondition = "AND (qv.status = '" . question_version_status::QUESTION_STATUS_READY . "' " .
+            " OR qv.status = '" . question_version_status::QUESTION_STATUS_DRAFT . "' )";
+        $substatuscondition = "AND v.status <> '"  . question_version_status::QUESTION_STATUS_HIDDEN . "' ";
         $sql = "SELECT c.*,
                     (SELECT COUNT(1)
                        FROM {question} q
@@ -268,19 +331,19 @@ class helper {
                       WHERE q.parent = '0'
                         $statuscondition
                             AND c.id = qbe.questioncategoryid
-                            AND ($showallversions = 1
+                            AND ({$showallversions} = 1
                                 OR (qv.version = (SELECT MAX(v.version)
                                                     FROM {question_versions} v
                                                     JOIN {question_bank_entries} be ON be.id = v.questionbankentryid
-                                                   WHERE be.id = qbe.id)
+                                                   WHERE be.id = qbe.id $substatuscondition)
                                    )
                                 )
                             ) AS questioncount
                   FROM {question_categories} c
-                 WHERE c.contextid IN ($contexts) $topwhere
-              ORDER BY $sortorder";
+                 WHERE c.contextid {$insql} {$topwhere}
+              ORDER BY {$sortorder}";
 
-        return $DB->get_records_sql($sql);
+        return $DB->get_records_sql($sql, $inparams);
     }
 
     /**
@@ -295,12 +358,20 @@ class helper {
      * @return array
      * @throws \coding_exception|\dml_exception
      */
-    public static function question_category_options(array $contexts, bool $top = false, int $currentcat = 0,
-                                                     bool $popupform = false, int $nochildrenof = -1,
-                                                     bool $escapecontextnames = true): array {
+    public static function question_category_options(
+        array $contexts,
+        bool $top = false,
+        int $currentcat = 0,
+        bool $popupform = false,
+        int $nochildrenof = -1,
+        bool $escapecontextnames = true,
+    ): array {
         global $CFG;
         $pcontexts = [];
         foreach ($contexts as $context) {
+            if ($context->contextlevel !== CONTEXT_MODULE) {
+                continue;
+            }
             $pcontexts[] = $context->id;
         }
         $contextslist = join(', ', $pcontexts);
@@ -323,9 +394,12 @@ class helper {
                 if ($category->contextid == $contextid) {
                     $cid = $category->id;
                     if ($currentcat != $cid || $currentcat == 0) {
-                        $a = new \stdClass;
-                        $a->name = format_string($category->indentedname, true,
-                            ['context' => $context]);
+                        $a = new \stdClass();
+                        $a->name = format_string(
+                            $category->indentedname,
+                            true,
+                            ['context' => $context]
+                        );
                         if ($category->idnumber !== null && $category->idnumber !== '') {
                             $a->idnumber = s($category->idnumber);
                         }
@@ -396,5 +470,15 @@ class helper {
         }
 
         return $categories;
+    }
+
+    /**
+     * Combine id and context id for a question category
+     *
+     * @param \stdClass $category a category to extract its id and context id
+     * @return string the combined string
+     */
+    public static function combine_id_context(\stdClass $category): string {
+        return $category->id . ',' . $category->contextid;
     }
 }

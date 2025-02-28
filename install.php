@@ -46,6 +46,7 @@ if (file_exists($configfile)) {
 define('CLI_SCRIPT', false); // prevents some warnings later
 define('AJAX_SCRIPT', false); // prevents some warnings later
 define('CACHE_DISABLE_ALL', true); // Disables caching.. just in case.
+define('NO_DEBUG_DISPLAY', false);
 define('PHPUNIT_TEST', false);
 define('IGNORE_COMPONENT_CACHE', true);
 define('MDL_PERF_TEST', false);
@@ -202,12 +203,8 @@ if (!empty($memlimit) and $memlimit != -1) {
 // the problem is that we need specific version of quickforms and hacked excel files :-(.
 ini_set('include_path', $CFG->libdir.'/pear' . PATH_SEPARATOR . ini_get('include_path'));
 
-// Register our classloader, in theory somebody might want to replace it to load other hacked core classes.
-if (defined('COMPONENT_CLASSLOADER')) {
-    spl_autoload_register(COMPONENT_CLASSLOADER);
-} else {
-    spl_autoload_register('core_component::classloader');
-}
+// Register our classloader.
+\core\component::register_autoloader();
 
 // Continue with lib loading.
 require_once($CFG->libdir.'/classes/text.php');
@@ -223,7 +220,6 @@ require_once($CFG->libdir.'/deprecatedlib.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->libdir.'/environmentlib.php');
 require_once($CFG->libdir.'/componentlib.class.php');
-require_once($CFG->dirroot.'/cache/lib.php');
 
 require('version.php');
 $CFG->target_release = $release;
@@ -243,11 +239,6 @@ define('SITEID', 1);
 $hint_dataroot = '';
 $hint_admindir = '';
 $hint_database = '';
-
-// Are we in help mode?
-if (isset($_GET['help'])) {
-    install_print_help_page($_GET['help']);
-}
 
 //first time here? find out suitable dataroot
 if (is_null($CFG->dataroot)) {
@@ -433,46 +424,46 @@ if ($config->stage == INSTALL_DATABASE) {
     echo '<div class="row mb-4">';
 
     $disabled = empty($distro->dbhost) ? '' : 'disabled="disabled';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_dbhost">'.$strdbhost.'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_dbhost">'.$strdbhost.'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_dbhost" name="dbhost" '.$disabled.' type="text" class="form-control text-ltr" value="'.s($config->dbhost).'" size="50" /></div>';
     echo '</div>';
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_dbname">'.$strdbname.'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_dbname">'.$strdbname.'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_dbname" name="dbname" type="text" class="form-control text-ltr" value="'.s($config->dbname).'" size="50" /></div>';
     echo '</div>';
 
     $disabled = empty($distro->dbuser) ? '' : 'disabled="disabled';
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_dbuser">'.$strdbuser.'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_dbuser">'.$strdbuser.'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_dbuser" name="dbuser" '.$disabled.' type="text" class="form-control text-ltr" value="'.s($config->dbuser).'" size="50" /></div>';
     echo '</div>';
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_dbpass">'.$strdbpass.'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_dbpass">'.$strdbpass.'</label></div>';
     // no password field here, the password may be visible in config.php if we can not write it to disk
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_dbpass" name="dbpass" type="text" class="form-control text-ltr" value="'.s($config->dbpass).'" size="50" /></div>';
     echo '</div>';
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_prefix">'.$strprefix.'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_prefix">'.$strprefix.'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_prefix" name="prefix" type="text" class="form-control text-ltr" value="'.s($config->prefix).'" size="10" /></div>';
     echo '</div>';
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_prefix">'.$strdbport.'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_prefix">'.$strdbport.'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_dbport" name="dbport" type="text" class="form-control text-ltr" value="'.s($config->dbport).'" size="10" /></div>';
     echo '</div>';
 
     if (!(stristr(PHP_OS, 'win') && !stristr(PHP_OS, 'darwin'))) {
         echo '<div class="row mb-4">';
-        echo '<div class="col-md-3 text-md-right pt-1"><label for="id_dbsocket">'.$strdbsocket.'</label></div>';
+        echo '<div class="col-md-3 text-md-end pt-1"><label for="id_dbsocket">'.$strdbsocket.'</label></div>';
         echo '<div class="col-md-9" data-fieldtype="text">';
         echo '<input id="id_dbsocket" name="dbsocket" type="text" class="form-control text-ltr" value="'.s($config->dbsocket).'" size="50" /></div>';
         echo '</div>';
@@ -499,12 +490,11 @@ if ($config->stage == INSTALL_DATABASETYPE) {
                        'auroramysql' => moodle_database::get_driver_instance('auroramysql', 'native'),
                        'mariadb'=> moodle_database::get_driver_instance('mariadb', 'native'),
                        'pgsql'  => moodle_database::get_driver_instance('pgsql',  'native'),
-                       'oci'    => moodle_database::get_driver_instance('oci',    'native'),
                        'sqlsrv' => moodle_database::get_driver_instance('sqlsrv', 'native'), // MS SQL*Server PHP driver
                       );
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="dbtype">'.get_string('dbtype', 'install').'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="dbtype">'.get_string('dbtype', 'install').'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="select">';
     echo '<select class="form-control" id="dbtype" name="dbtype">';
     $disabled = array();
@@ -583,19 +573,19 @@ if ($config->stage == INSTALL_PATHS) {
     $stradmindirname = get_string('admindirname', 'install');
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_wwwroot">'.$paths['wwwroot'].'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_wwwroot">'.$paths['wwwroot'].'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_wwwroot" name="wwwroot" type="text" class="form-control text-ltr" value="'.s($CFG->wwwroot).'" disabled="disabled" size="70" /></div>';
     echo '</div>';
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_dirroot">'.$paths['dirroot'].'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_dirroot">'.$paths['dirroot'].'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_dirroot" name="dirroot" type="text" class="form-control text-ltr" value="'.s($CFG->dirroot).'" disabled="disabled" size="70" /></div>';
     echo '</div>';
 
     echo '<div class="row mb-4">';
-    echo '<div class="col-md-3 text-md-right pt-1"><label for="id_dataroot">'.$paths['dataroot'].'</label></div>';
+    echo '<div class="col-md-3 text-md-end pt-1"><label for="id_dataroot">'.$paths['dataroot'].'</label></div>';
     echo '<div class="col-md-9" data-fieldtype="text">';
     echo '<input id="id_dataroot" name="dataroot" type="text" class="form-control text-ltr" value="'.s($config->dataroot).'" size="70" /></div>';
     echo '</div>';
@@ -606,7 +596,7 @@ if ($config->stage == INSTALL_PATHS) {
 
     if (!file_exists("$CFG->dirroot/admin/environment.xml")) {
         echo '<div class="row mb-4">';
-        echo '<div class="col-md-3 text-md-right pt-1"><label for="id_admin">'.$paths['admindir'].'</label></div>';
+        echo '<div class="col-md-3 text-md-end pt-1"><label for="id_admin">'.$paths['admindir'].'</label></div>';
         echo '<div class="col-md-9" data-fieldtype="text">';
         echo '<input id="id_admin" name="admin" type="text" class="form-control text-ltr" value="'.s($config->admin).'" size="10" /></div>';
         echo '</div>';
@@ -640,7 +630,7 @@ if ($distro) {
 
 $languages = get_string_manager()->get_list_of_translations();
 echo '<div class="row mb-4">';
-echo '<div class="col-md-3 text-md-right pt-1"><label for="langselect">'.get_string('language').'</label></div>';
+echo '<div class="col-md-3 text-md-end pt-1"><label for="langselect">'.get_string('language').'</label></div>';
 echo '<div class="col-md-9" data-fieldtype="select">';
 echo '<select id="langselect" class="form-control" name="lang" onchange="this.form.submit()">';
 foreach ($languages as $name=>$value) {

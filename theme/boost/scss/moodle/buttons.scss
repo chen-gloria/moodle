@@ -39,10 +39,10 @@ p.arrow_button {
 }
 
 .btn.btn-icon {
-    height: ($icon-width + 20px);
-    width: ($icon-width + 20px);
-    font-size: $icon-width;
-    line-height: $icon-width;
+    height: ($icon-height + 20px);
+    width: ($icon-width + 16px);
+    font-size: $icon-height;
+    line-height: $icon-height;
     padding: 0;
     border-radius: 50%;
     flex-shrink: 0;
@@ -55,7 +55,7 @@ p.arrow_button {
     @each $size, $length in $iconsizes {
         &.icon-size-#{$size} {
             height: ($length + 20px) !important; /* stylelint-disable-line declaration-no-important */
-            width: ($length + 20px) !important; /* stylelint-disable-line declaration-no-important */
+            width: (map-get($iconwidthsizes, $size) + 20px) !important; /* stylelint-disable-line declaration-no-important */
             font-size: $length !important; /* stylelint-disable-line declaration-no-important */
             line-height: $length !important; /* stylelint-disable-line declaration-no-important */
         }
@@ -89,4 +89,38 @@ p.arrow_button {
     .btn-outline-#{$color} {
         @include button-focus($value, $gray-800);
     }
+}
+
+// Small buttons should have the same border-radius as the normal buttons.
+.btn-sm,
+.btn-group-sm > .btn {
+    --bs-btn-border-radius: var(--#{$prefix}border-radius);
+}
+
+//
+// Subtle buttons.
+//
+
+@each $color, $value in $theme-colors {
+    .btn-subtle-#{$color} {
+        --#{$prefix}btn-font-weight: #{$font-weight-bold};
+        --#{$prefix}btn-color: var(--#{$prefix}#{$color}-text-emphasis);
+        --#{$prefix}btn-bg: var(--#{$prefix}#{$color}-bg-subtle);
+        --#{$prefix}btn-active-color: var(--#{$prefix}#{$color}-text-emphasis);
+        --#{$prefix}btn-active-bg: var(--#{$prefix}#{$color}-bg-subtle);
+        --#{$prefix}btn-hover-color: #{color-contrast($value)};
+        --#{$prefix}btn-hover-bg: var(--#{$prefix}#{$color});
+        --#{$prefix}btn-focus-shadow-rgb: #{to-rgb($value)};
+        @include button-focus($value, $white);
+    }
+}
+.btn-subtle-body {
+    --#{$prefix}btn-font-weight: #{$font-weight-bold};
+    --#{$prefix}btn-color: var(--#{$prefix}body-color);
+    --#{$prefix}btn-bg: transparent;
+    --#{$prefix}btn-border-color: var(--#{$prefix}border-color);
+    --#{$prefix}btn-hover-color: #{color-contrast($gray-600)};
+    --#{$prefix}btn-hover-bg: var(--#{$prefix}gray-600);
+    --#{$prefix}btn-focus-shadow-rgb: #{to-rgb($gray-600)};
+    @include button-focus($gray-600, $white);
 }

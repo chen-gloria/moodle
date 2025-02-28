@@ -67,9 +67,6 @@ class section implements named_templatable, renderable {
     /** @var section availability output class */
     protected $availabilityclass;
 
-    /** @var optional move here output class */
-    protected $movehereclass;
-
     /** @var optional visibility output class */
     protected $visibilityclass;
 
@@ -95,9 +92,7 @@ class section implements named_templatable, renderable {
         $this->format = $format;
         $this->section = $section;
 
-        if ($section->section > $format->get_last_section_number()) {
-            $this->isstealth = true;
-        }
+        $this->isstealth = $section->is_orphan();
 
         // Load output classes names from format.
         $this->headerclass = $format->get_output_classname('content\\section\\header');
@@ -106,8 +101,16 @@ class section implements named_templatable, renderable {
         $this->cmsummaryclass = $format->get_output_classname('content\\section\\cmsummary');
         $this->controlmenuclass = $format->get_output_classname('content\\section\\controlmenu');
         $this->availabilityclass = $format->get_output_classname('content\\section\\availability');
-        $this->movehereclass = $format->get_output_classname('content\\section\\movehere');
         $this->visibilityclass = $format->get_output_classname('content\\section\\visibility');
+    }
+
+    /**
+     * Check if the section is considered stealth.
+     *
+     * @return bool
+     */
+    public function is_stealth(): bool {
+        return $this->isstealth;
     }
 
     /**
@@ -152,7 +155,9 @@ class section implements named_templatable, renderable {
             'highlightedlabel' => $format->get_section_highlighted_name(),
             'sitehome' => $course->id == SITEID,
             'editing' => $PAGE->user_is_editing(),
-            'displayonesection' => ($course->id != SITEID && !is_null($format->get_sectionid())),
+            'displayonesection' => ($course->id != SITEID && $format->get_sectionid() == $section->id),
+            // Section name is used as data attribute is to facilitate behat locators.
+            'sectionname' => $format->get_section_name($section),
         ];
 
         $haspartials = [];

@@ -77,9 +77,9 @@ class availability implements named_templatable, renderable {
      * Export this data so it can be used as the context for a mustache template.
      *
      * @param \renderer_base $output typically, the renderer that's calling this function
-     * @return stdClass data context for a mustache template
+     * @return stdClass|null data context for a mustache template
      */
-    public function export_for_template(\renderer_base $output): stdClass {
+    public function export_for_template(\renderer_base $output): ?stdClass {
         $this->build_export_data($output);
         return $this->data;
     }
@@ -142,6 +142,11 @@ class availability implements named_templatable, renderable {
             ['id' => $this->section->id, 'showonly' => 'availabilityconditions']
         );
         $info = ['editurl' => $editurl->out(false)];
+
+        if ($section->is_orphan()) {
+            $info['editing'] = false;
+        }
+
         if (!$section->visible) {
             return [];
         } else if (!$section->uservisible) {
@@ -246,36 +251,10 @@ class availability implements named_templatable, renderable {
     }
 
     /**
-     * Generate the basic availability information data.
-     *
      * @deprecated since Moodle 4.3 MDL-78204. Please use {@see self::get_availability_data} instead.
-     * @todo MDL-78489 This will be deleted in Moodle 4.7.
-     * @param string $text the formatted avalability text
-     * @param string $additionalclasses additional css classes
-     * @return stdClass the availability information data
      */
-    protected function availability_info($text, $additionalclasses = ''): stdClass {
-        debugging('Use of ' . __FUNCTION__ . '() have been deprecated, ' .
-        'please use core_courseformat\output\local\content\section\availability::get_availability_data()', DEBUG_DEVELOPER);
-
-        $data = (object)[
-            'text' => $text,
-            'classes' => $additionalclasses
-        ];
-        $additionalclasses = array_filter(explode(' ', $additionalclasses));
-
-        if (in_array('ishidden', $additionalclasses)) {
-            $data->ishidden = 1;
-        } else if (in_array('isstealth', $additionalclasses)) {
-            $data->isstealth = 1;
-        } else if (in_array('isrestricted', $additionalclasses)) {
-            $data->isrestricted = 1;
-
-            if (in_array('isfullinfo', $additionalclasses)) {
-                $data->isfullinfo = 1;
-            }
-        }
-
-        return $data;
+    #[\core\attribute\deprecated('get_availability_data()', since: '4.3', mdl: 'MDL-78489', final: true)]
+    protected function availability_info() {
+        \core\deprecation::emit_deprecation_if_present([self::class, __FUNCTION__]);
     }
 }

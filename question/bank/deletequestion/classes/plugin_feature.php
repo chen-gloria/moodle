@@ -44,13 +44,18 @@ class plugin_feature extends plugin_features_base {
         ];
     }
 
-    public function get_bulk_actions(): array {
+    /**
+     * Initialise the bulk action.
+     * @param view $qbank
+     * @return bulk_delete_action[]
+     */
+    public function get_bulk_actions(view $qbank): array {
         return [
-            new bulk_delete_action(),
+            new bulk_delete_action($qbank),
         ];
     }
 
-    public function get_question_filters(view $qbank = null): array {
+    public function get_question_filters(?view $qbank = null): array {
         return [
             new hidden_condition($qbank),
         ];

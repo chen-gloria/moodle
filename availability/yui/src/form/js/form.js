@@ -272,13 +272,17 @@ M.core_availability.plugin = {
      * overridden by child plugin.
      *
      * @method init
-     * @param {String} component Component name e.g. 'availability_date'
+     * @param {String} component Component name e.g. 'availability_date'.
+     * @param {boolean} allowAdd Indicates whether adding new instances of the plugin is permitted.
+     * @param {Object} params Additional parameters.
+     * @param {boolean} displayMode Whether the eye icon is show or hide. True for "Hide", false for "Show".
      */
-    init: function(component, allowAdd, params) {
+    init: function(component, allowAdd, params, displayMode) {
         var name = component.replace(/^availability_/, '');
         this.allowAdd = allowAdd;
         M.core_availability.form.plugins[name] = this;
         this.initInner.apply(this, params);
+        this.displayMode = displayMode;
     },
 
     /**
@@ -373,14 +377,14 @@ M.core_availability.List = function(json, root, parentRoot) {
             '<div class="availability-header mb-1"><span>' +
             M.util.get_string('listheader_sign_before', 'availability') + '</span>' +
             ' <label><span class="accesshide">' + M.util.get_string('label_sign', 'availability') +
-            ' </span><select class="availability-neg custom-select mx-1"' +
+            ' </span><select class="availability-neg form-select mx-1"' +
             ' title="' + M.util.get_string('label_sign', 'availability') + '">' +
             '<option value="">' + M.util.get_string('listheader_sign_pos', 'availability') + '</option>' +
             '<option value="!">' + M.util.get_string('listheader_sign_neg', 'availability') + '</option></select></label> ' +
             '<span class="availability-single">' + M.util.get_string('listheader_single', 'availability') + '</span>' +
             '<span class="availability-multi">' + M.util.get_string('listheader_multi_before', 'availability') +
             ' <label><span class="accesshide">' + M.util.get_string('label_multi', 'availability') + ' </span>' +
-            '<select class="availability-op custom-select mx-1"' +
+            '<select class="availability-op form-select mx-1"' +
             ' title="' + M.util.get_string('label_multi', 'availability') + '"><option value="&">' +
             M.util.get_string('listheader_multi_and', 'availability') + '</option>' +
             '<option value="|">' + M.util.get_string('listheader_multi_or', 'availability') + '</option></select></label> ' +
@@ -776,12 +780,17 @@ M.core_availability.List.prototype.clickAdd = function() {
 M.core_availability.List.prototype.getAddHandler = function(type, dialogRef) {
     return function() {
         var newItem;
+        var displayMode = true;
+        // Check if we have changed the eye icon in the manage restriction to hidden.
+        if (type && M.core_availability.form.plugins[type].displayMode) {
+            displayMode = false;
+        }
         if (type) {
             // Create an Item object to represent the child.
-            newItem = new M.core_availability.Item({type: type, creating: true}, this.root);
+            newItem = new M.core_availability.Item({type: type, creating: true, showc: displayMode}, this.root);
         } else {
             // Create a new List object to represent the child.
-            newItem = new M.core_availability.List({c: [], showc: true}, false, this.root);
+            newItem = new M.core_availability.List({c: [], showc: displayMode}, false, this.root);
         }
         // Add to list.
         this.addChild(newItem);

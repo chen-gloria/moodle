@@ -856,7 +856,7 @@ class grade_edit_tree_column_name extends grade_edit_tree_column {
         $categorycell = parent::get_category_cell($category, $levelclass, $params);
         $categorycell->colspan = ($this->deepest_level + 2) - $params['level'];
         $rowtitle = html_writer::div($params['name'], 'rowtitle');
-        $categorycell->text = html_writer::div($mastercheckbox . $visibilitytoggle . $moveaction . $rowtitle, 'font-weight-bold');
+        $categorycell->text = html_writer::div($mastercheckbox . $visibilitytoggle . $moveaction . $rowtitle, 'fw-bold');
         return $categorycell;
     }
 
@@ -865,7 +865,7 @@ class grade_edit_tree_column_name extends grade_edit_tree_column {
             throw new Exception('Array key (name, level or element) missing from 2nd param of grade_edit_tree_column_name::get_item_cell($item, $params)');
         }
 
-        $itemicon = \html_writer::div($params['icon'], 'mr-1');
+        $itemicon = \html_writer::div($params['icon'], 'me-1');
         $itemtype = \html_writer::span($params['type'], 'd-block text-uppercase small dimmed_text');
         $itemtitle = html_writer::div($params['name'], 'rowtitle');
         $content = \html_writer::div($itemtype . $itemtitle);

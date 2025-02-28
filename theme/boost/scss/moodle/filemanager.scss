@@ -35,10 +35,6 @@
 .filepicker .moodle-dialogue-bd {
     min-height: 520px;
 }
-.file-picker .fp-navbar {
-    min-height: 40px;
-    padding: 4px;
-}
 
 .fp-navbar {
     border-color: $input-border-color;
@@ -122,7 +118,7 @@
 
 .fp-viewbar:not(.disabled) a.checked {
     background-color: darken(map-get($theme-colors, 'secondary'), 10%);
-    color: color-yiq(darken(map-get($theme-colors, 'secondary'), 10%));
+    color: color-contrast(darken(map-get($theme-colors, 'secondary'), 10%));
     border-color: darken(map-get($theme-colors, 'secondary'), 12.5%);
 }
 

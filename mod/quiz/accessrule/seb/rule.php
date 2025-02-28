@@ -82,6 +82,9 @@ class quizaccess_seb extends access_rule_base {
     /**
      * Validate the data from any form fields added using {@link add_settings_form_fields()}.
      *
+     * If the managing user cannot configure SEB by either lack of permissions or locked
+     * settings, then the form fields will be frozen and no validation will be done.
+     *
      * @param array $errors the errors found so far.
      * @param array $data the submitted form data.
      * @param array $files information about any uploaded files.
@@ -376,8 +379,11 @@ class quizaccess_seb extends access_rule_base {
      */
     private function get_invalid_key_error_message(): string {
         // Return error message with download link and links to get the seb config.
-        return get_string('invalidkeys', 'quizaccess_seb')
-            . $this->display_buttons($this->get_action_buttons());
+        if ($this->accessmanager->is_using_seb()) {
+            return get_string('invalidkeys', 'quizaccess_seb')
+                . $this->display_buttons($this->get_action_buttons());
+        }
+        return $this->display_buttons($this->get_action_buttons());
     }
 
     /**
@@ -478,7 +484,7 @@ class quizaccess_seb extends access_rule_base {
      *
      * @return string HTML code of the provided buttons.
      */
-    private function display_buttons(string $buttonshtml, $class = '', array $attributes = null): string {
+    private function display_buttons(string $buttonshtml, $class = '', ?array $attributes = null): string {
         $html = '';
 
         if (!empty($buttonshtml)) {
@@ -528,7 +534,12 @@ class quizaccess_seb extends access_rule_base {
         $button = '';
 
         if (!empty($this->get_seb_download_url())) {
-            $button = $OUTPUT->single_button($this->get_seb_download_url(), get_string('sebdownloadbutton', 'quizaccess_seb'));
+            $sebdownloadlink = $this->get_seb_download_url();
+            $button = html_writer::start_tag('div', ['class' => 'singlebutton']);
+            $button .= html_writer::link($sebdownloadlink, get_string('sebdownloadbutton', 'quizaccess_seb'),
+                ['class' => 'btn btn-secondary', 'target' => '_blank']);
+            $button .= html_writer::end_tag('div');
+
         }
 
         return $button;

@@ -59,6 +59,10 @@ class behat_course extends behat_base {
                     "%core_course/activityChooser%//*[@data-region=%locator%][contains(concat(' ', @class, ' '), ' tab-pane ')]"
                 ]
             ),
+            new behat_component_named_selector(
+                'initials bar',
+                [".//*[contains(concat(' ', @class, ' '), ' initialbar ')]//span[contains(., %locator%)]/parent::div"]
+            ),
         ];
     }
 
@@ -178,7 +182,19 @@ class behat_course extends behat_base {
      */
     protected function resolve_page_instance_url(string $type, string $identifier): moodle_url {
         $type = strtolower($type);
+
+        // Some selectors can have a sub selector divided by >.
+        $subtype = null;
+        $parts = explode('>', $type);
+        if (count($parts) > 1) {
+            $type = trim($parts[0]);
+            $subtype = trim($parts[1]);
+        }
+
+        $sectionpage = 'section.php';
         switch ($type) {
+            case 'section settings':
+                $sectionpage = 'editsection.php';
             case 'section':
                 $identifiers = explode('>', $identifier);
                 $identifiers = array_map('trim', $identifiers);
@@ -196,7 +212,13 @@ class behat_course extends behat_base {
                 if (!$section) {
                     throw new Exception("The specified section $identifier does not exist.");
                 }
-                return new moodle_url('/course/section.php', ['id' => $section->id]);
+                return new moodle_url('/course/' . $sectionpage, ['id' => $section->id]);
+            case 'activities':
+                $params = ['id' => $this->get_course_id($identifier)];
+                if ($subtype !== null) {
+                    $params['expand[]'] = $subtype;
+                }
+                return new moodle_url('/course/overview.php', $params);
         }
         throw new Exception('Unrecognised core page type "' . $type . '."');
     }
@@ -267,8 +289,10 @@ class behat_course extends behat_base {
 
         $this->require_javascript('Please use the \'the following "activity" exists:\' data generator instead.');
 
+        $infrontpage = false;
         if ($this->getSession()->getPage()->find('css', 'body#page-site-index') && (int) $sectionnum <= 1) {
             // We are on the frontpage.
+            $infrontpage = true;
             if ($sectionnum) {
                 // Section 1 represents the contents on the frontpage.
                 $sectionxpath = "//body[@id='page-site-index']" .
@@ -284,6 +308,14 @@ class behat_course extends behat_base {
 
         // Clicks add activity or resource section link.
         $sectionnode = $this->find('xpath', $sectionxpath);
+        if (!$infrontpage) {
+            $this->execute('behat_general::i_click_on_in_the', [
+                    "//button[@data-action='open-addingcontent' and not(@data-beforemod)]",
+                    'xpath',
+                    $sectionnode,
+                    'NodeElement',
+            ]);
+        }
         $this->execute('behat_general::i_click_on_in_the', [
             "//button[@data-action='open-chooser' and not(@data-beforemod)]",
             'xpath',
@@ -305,26 +337,26 @@ class behat_course extends behat_base {
     /**
      * Opens a section edit menu if it is not already opened.
      *
-     * @Given /^I open section "(?P<section_number>\d+)" edit menu$/
+     * @Given /^I open section "(?P<section>(?:[^"]|\\")*)" edit menu$/
      * @throws DriverException The step is not available when Javascript is disabled
-     * @param string $sectionnumber
+     * @param string|int $section
      */
-    public function i_open_section_edit_menu($sectionnumber) {
+    public function i_open_section_edit_menu($section) {
         if (!$this->running_javascript()) {
             throw new DriverException('Section edit menu not available when Javascript is disabled');
         }
 
         // Wait for section to be available, before clicking on the menu.
-        $this->i_wait_until_section_is_available($sectionnumber);
+        $this->i_wait_until_section_is_available($section);
 
         // If it is already opened we do nothing.
-        $xpath = $this->section_exists($sectionnumber);
-        $xpath .= "/descendant::div[contains(@class, 'section-actions')]/descendant::a[contains(@data-toggle, 'dropdown')]";
+        $xpath = $this->section_exists($section);
+        $xpath .= "/descendant::div[contains(@class, 'section-actions')]/descendant::a[@data-bs-toggle='dropdown']";
 
-        $exception = new ExpectationException('Section "' . $sectionnumber . '" was not found', $this->getSession());
+        $exception = new ExpectationException('Section "' . $section . '" was not found', $this->getSession());
         $menu = $this->find('xpath', $xpath, $exception);
         $menu->click();
-        $this->i_wait_until_section_is_available($sectionnumber);
+        $this->i_wait_until_section_is_available($section);
     }
 
     /**
@@ -404,34 +436,45 @@ class behat_course extends behat_base {
     /**
      * Shows the specified hidden section. You need to be in the course page and on editing mode.
      *
-     * @Given /^I show section "(?P<section_number>\d+)"$/
-     * @param int $sectionnumber
+     * @Given /^I show section "(?P<section>(?:[^"]|\\")*)"$/
+     * @param int|string $section
      */
-    public function i_show_section($sectionnumber) {
-        $showlink = $this->show_section_link_exists($sectionnumber);
+    public function i_show_section($section) {
+        // Ensures the section exists.
+        $xpath = $this->section_exists($section);
+        // We need to know the course format as the text strings depends on them.
+        $courseformat = $this->get_course_format();
+        $strshow = get_string('showfromothers', $courseformat);
 
-        // Ensure section edit menu is open before interacting with it.
+
+        // If javascript is on, link is inside a menu.
         if ($this->running_javascript()) {
-            $this->i_open_section_edit_menu($sectionnumber);
+            $this->i_open_section_edit_menu($section);
         }
-        $showlink->click();
+
+        // Ensure the click is using the action menu and not the visibility badge.
+        $xpath .= "//*[@role='menu']";
+
+        // Click on hide link.
+        $this->execute('behat_general::i_click_on_in_the',
+                [$strshow, "link", $this->escape($xpath), "xpath_element"]
+        );
 
         if ($this->running_javascript()) {
             $this->getSession()->wait(self::get_timeout() * 1000, self::PAGE_READY_JS);
-            $this->i_wait_until_section_is_available($sectionnumber);
+            $this->i_wait_until_section_is_available($section);
         }
     }
 
     /**
      * Hides the specified visible section. You need to be in the course page and on editing mode.
      *
-     * @Given /^I hide section "(?P<section_number>\d+)"$/
-     * @param int $sectionnumber
+     * @Given /^I hide section "(?P<section>(?:[^"]|\\")*)"$/
+     * @param int|string $section
      */
-    public function i_hide_section($sectionnumber) {
+    public function i_hide_section($section) {
         // Ensures the section exists.
-        $xpath = $this->section_exists($sectionnumber);
-
+        $xpath = $this->section_exists($section);
         // We need to know the course format as the text strings depends on them.
         $courseformat = $this->get_course_format();
         if (get_string_manager()->string_exists('hidefromothers', $courseformat)) {
@@ -442,17 +485,17 @@ class behat_course extends behat_base {
 
         // If javascript is on, link is inside a menu.
         if ($this->running_javascript()) {
-            $this->i_open_section_edit_menu($sectionnumber);
+            $this->i_open_section_edit_menu($section);
         }
 
-        // Click on delete link.
+        // Click on hide link.
         $this->execute('behat_general::i_click_on_in_the',
               array($strhide, "link", $this->escape($xpath), "xpath_element")
         );
 
         if ($this->running_javascript()) {
             $this->getSession()->wait(self::get_timeout() * 1000, self::PAGE_READY_JS);
-            $this->i_wait_until_section_is_available($sectionnumber);
+            $this->i_wait_until_section_is_available($section);
         }
     }
 
@@ -622,7 +665,7 @@ class behat_course extends behat_base {
         if ($this->is_course_editor()) {
             $xpath = $sectionxpath .
                     "/descendant::div[contains(@class, 'section-actions')]" .
-                    "/descendant::a[contains(@data-toggle, 'dropdown')]";
+                    "/descendant::a[contains(@data-bs-toggle, 'dropdown')]";
             if (!$this->getSession()->getPage()->find('xpath', $xpath)) {
                 throw new ExpectationException('The section edit menu is not available', $this->getSession());
             }
@@ -832,9 +875,12 @@ class behat_course extends behat_base {
      * @param int $sectionnumber The number of section
      */
     public function i_move_activity_to_section($activityname, $sectionnumber): void {
+        $this->require_javascript('Moving activities requires javascript.');
+
         // Ensure the destination is valid.
         $sectionxpath = $this->section_exists($sectionnumber);
 
+        // TODO: remove this if clause as part of MDL-83627 when YUI is removed from course.
         // Not all formats are compatible with the move tool.
         $activitynode = $this->get_activity_node($activityname);
         if (!$activitynode->find('css', "[data-action='moveCm']", false, false, 0)) {
@@ -843,29 +889,17 @@ class behat_course extends behat_base {
             return;
         }
 
-        // JS enabled.
-        if ($this->running_javascript()) {
-            $this->i_open_actions_menu($activityname);
-            $this->execute(
-                'behat_course::i_click_on_in_the_activity',
-                [get_string('move'), "link", $this->escape($activityname)]
-            );
-            $this->execute("behat_general::i_click_on_in_the", [
-                "[data-for='section'][data-number='$sectionnumber']",
-                'css_element',
-                "[data-region='modal-container']",
-                'css_element'
-            ]);
-        } else {
-            $this->execute(
-                'behat_course::i_click_on_in_the_activity',
-                [get_string('move'), "link", $this->escape($activityname)]
-            );
-            $this->execute(
-                'behat_general::i_click_on_in_the',
-                ["li.movehere a", "css_element", $this->escape($sectionxpath), "xpath_element"]
-            );
-        }
+        $this->i_open_actions_menu($activityname);
+        $this->execute(
+            'behat_course::i_click_on_in_the_activity',
+            [get_string('move'), "link", $this->escape($activityname)]
+        );
+        $this->execute("behat_general::i_click_on_in_the", [
+            "[data-for='section'][data-number='$sectionnumber']",
+            'css_element',
+            "[data-region='modal-container']",
+            'css_element',
+        ]);
     }
 
     /**
@@ -873,6 +907,7 @@ class behat_course extends behat_base {
      *
      * This step is experimental when using it in Javascript tests. Editing mode should be on.
      *
+     * @todo remove this module as part of MDL-83627.
      * @param string $activityname The activity name
      * @param int $sectionnumber The number of section
      */
@@ -939,7 +974,7 @@ class behat_course extends behat_base {
         $activitynode = $this->get_activity_node($activityname);
 
         // Find the menu.
-        $menunode = $activitynode->find('css', 'a[data-toggle=dropdown]');
+        $menunode = $activitynode->find('css', 'a[data-bs-toggle=dropdown]');
         if (!$menunode) {
             throw new ExpectationException(sprintf('Could not find actions menu for the activity "%s"', $activityname),
                     $this->getSession());
@@ -950,7 +985,7 @@ class behat_course extends behat_base {
         }
 
         $this->execute('behat_course::i_click_on_in_the_activity',
-                array("a[data-toggle='dropdown']", "css_element", $this->escape($activityname))
+                ["a[data-bs-toggle='dropdown']", "css_element", $this->escape($activityname)]
         );
 
         $this->actions_menu_should_be_open($activityname);
@@ -972,7 +1007,7 @@ class behat_course extends behat_base {
         // If it is already closed we do nothing.
         $activitynode = $this->get_activity_node($activityname);
         // Find the menu.
-        $menunode = $activitynode->find('css', 'a[data-toggle=dropdown]');
+        $menunode = $activitynode->find('css', 'a[data-bs-toggle=dropdown]');
         if (!$menunode) {
             throw new ExpectationException(sprintf('Could not find actions menu for the activity "%s"', $activityname),
                     $this->getSession());
@@ -983,7 +1018,7 @@ class behat_course extends behat_base {
         }
 
         $this->execute('behat_course::i_click_on_in_the_activity',
-                array("a[data-toggle='dropdown']", "css_element", $this->escape($activityname))
+                ["a[data-bs-toggle='dropdown']", "css_element", $this->escape($activityname)]
         );
     }
 
@@ -1002,7 +1037,7 @@ class behat_course extends behat_base {
 
         $activitynode = $this->get_activity_node($activityname);
         // Find the menu.
-        $menunode = $activitynode->find('css', 'a[data-toggle=dropdown]');
+        $menunode = $activitynode->find('css', 'a[data-bs-toggle=dropdown]');
         if (!$menunode) {
             throw new ExpectationException(sprintf('Could not find actions menu for the activity "%s"', $activityname),
                     $this->getSession());
@@ -1132,10 +1167,22 @@ class behat_course extends behat_base {
                 ]
             );
         } else {
-            $this->execute("behat_forms::press_button", get_string('yes'));
+            $this->execute("behat_forms::press_button", get_string('delete'));
         }
 
         return $steps;
+    }
+
+    /**
+     * Deletes a course.
+     *
+     * @Given the course :coursefullname is deleted
+     * @param string $coursefullname
+     */
+    #[\core\attribute\example('And the course "Course test" is deleted')]
+    public function the_course_is_deleted($coursefullname) {
+        delete_course($this->get_course_id($coursefullname), false);
+        fix_course_sortorder();
     }
 
     /**
@@ -1173,7 +1220,7 @@ class behat_course extends behat_base {
         // Determine the future new activity xpath from the former one.
         $duplicatedxpath = "//li[contains(concat(' ', normalize-space(@class), ' '), ' activity ')]" .
                 "[contains(., $activityliteral)]/following-sibling::li";
-        $duplicatedactionsmenuxpath = $duplicatedxpath . "/descendant::a[@data-toggle='dropdown']";
+        $duplicatedactionsmenuxpath = $duplicatedxpath . "/descendant::a[@data-bs-toggle='dropdown']";
 
         if ($this->running_javascript()) {
             // We wait until the AJAX request finishes and the section is visible again.
@@ -1223,14 +1270,14 @@ class behat_course extends behat_base {
      * Hopefully we would not require test writers to use this step
      * and we will manage it from other step definitions.
      *
-     * @Given /^I wait until section "(?P<section_number>\d+)" is available$/
-     * @param int $sectionnumber
+     * @Given /^I wait until section "(?P<section>(?:[^"]|\\")*)" is available$/
+     * @param int|string $section
      * @return void
      */
-    public function i_wait_until_section_is_available($sectionnumber) {
+    public function i_wait_until_section_is_available($section) {
 
         // Looks for a hidden lightbox or a non-existent lightbox in that section.
-        $sectionxpath = $this->section_exists($sectionnumber);
+        $sectionxpath = $this->section_exists($section);
         $hiddenlightboxxpath = $sectionxpath . "/descendant::div[contains(concat(' ', @class, ' '), ' lightbox ')][contains(@style, 'display: none')]" .
             " | " .
             $sectionxpath . "[count(child::div[contains(@class, 'lightbox')]) = 0]";
@@ -1271,10 +1318,26 @@ class behat_course extends behat_base {
      * Checks if the course section exists.
      *
      * @throws ElementNotFoundException Thrown by behat_base::find
+     * @param int|string $section Section number or name to look for.
+     * @return string The xpath of the section.
+     */
+    protected function section_exists($section) {
+
+        if (is_numeric($section)) {
+            return $this->section_number_exists($section);
+        }
+
+        return $this->section_name_exists($section);
+    }
+
+    /**
+     * Checks if the course section number exists.
+     *
+     * @throws ElementNotFoundException Thrown by behat_base::find
      * @param int $sectionnumber
      * @return string The xpath of the section.
      */
-    protected function section_exists($sectionnumber) {
+    protected function section_number_exists(int $sectionnumber): string {
 
         // Just to give more info in case it does not exist.
         $xpath = "//li[@id='section-" . $sectionnumber . "']";
@@ -1285,16 +1348,38 @@ class behat_course extends behat_base {
     }
 
     /**
+     * Checks if the section name exists.
+     *
+     * @throws ElementNotFoundException Thrown by behat_base::find
+     * @param string $sectionname
+     * @return string The xpath of the section.
+     */
+    protected function section_name_exists(string $sectionname): string {
+        // Let's try to find section or subsection in course page.
+        $xpath = "//li[@data-for='section']//*[@data-for='section_title' and contains(normalize-space(.), '" . $sectionname ."')]";
+        $exception = new ElementNotFoundException($this->getSession(), "Section $sectionname ");
+        try {
+            $this->find('xpath', $xpath, $exception);
+        } catch (ElementNotFoundException $e) {
+            // Let's try to find section in section page.
+            $xpath = "//header[@id='page-header' and contains(normalize-space(.), '" . $sectionname ."')]";
+            $this->find('xpath', $xpath, $exception);
+        }
+
+        return $xpath;
+    }
+
+    /**
      * Returns the show section icon or throws an exception.
      *
      * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param int $sectionnumber
+     * @param int|string $section Section number or name to look for.
      * @return NodeElement
      */
-    protected function show_section_link_exists($sectionnumber) {
+    protected function show_section_link_exists($section) {
 
         // Gets the section xpath and ensure it exists.
-        $xpath = $this->section_exists($sectionnumber);
+        $xpath = $this->section_exists($section);
 
         // We need to know the course format as the text strings depends on them.
         $courseformat = $this->get_course_format();
@@ -1313,13 +1398,13 @@ class behat_course extends behat_base {
      * Returns the hide section icon link if it exists or throws exception.
      *
      * @throws ElementNotFoundException Thrown by behat_base::find
-     * @param int $sectionnumber
+     * @param int|string $section Section number or name to look for.
      * @return NodeElement
      */
-    protected function hide_section_link_exists($sectionnumber) {
+    protected function hide_section_link_exists($section) {
 
         // Gets the section xpath and ensure it exists.
-        $xpath = $this->section_exists($sectionnumber);
+        $xpath = $this->section_exists($section);
 
         // We need to know the course format as the text strings depends on them.
         $courseformat = $this->get_course_format();
@@ -1357,6 +1442,10 @@ class behat_course extends behat_base {
 
         if (strstr($bodyid, 'page-course-view-') === false) {
             throw $exception;
+        }
+
+        if (strstr($bodyid, 'page-course-view-section-') !== false) {
+            return 'format_' . str_replace('page-course-view-section-', '', $bodyid);
         }
 
         return 'format_' . str_replace('page-course-view-', '', $bodyid);
@@ -1958,7 +2047,7 @@ class behat_course extends behat_base {
             throw new ExpectationException("Expected action was not available or not found ($action)", $this->getSession());
         }
         if ($this->running_javascript() && !$actionnode->isVisible()) {
-            $actionsnode->find('css', 'a[data-toggle=dropdown]')->click();
+            $actionsnode->find('css', 'a[data-bs-toggle=dropdown]')->click();
             $actionnode = $actionsnode->find('css', '.action-'.$action);
         }
         $actionnode->click();
@@ -1984,7 +2073,7 @@ class behat_course extends behat_base {
      */
     public function i_open_the_action_menu_for_item_in_management_category_listing($name) {
         $node = $this->get_management_category_listing_node_by_name($name);
-        $node->find('xpath', "//*[contains(@class, 'category-item-actions')]//a[@data-toggle='dropdown']")->click();
+        $node->find('xpath', "//*[contains(@class, 'category-item-actions')]//a[@data-bs-toggle='dropdown']")->click();
     }
 
     /**
@@ -2084,8 +2173,11 @@ class behat_course extends behat_base {
      * @Given /^I open the activity chooser$/
      */
     public function i_open_the_activity_chooser() {
+        // Open the "Activity or resource and Subsection" dropdown first.
         $this->execute('behat_general::i_click_on',
-            array('//button[@data-action="open-chooser"]', 'xpath_element'));
+                ['//button[@data-action="open-addingcontent"]', 'xpath_element']);
+        $this->execute('behat_general::i_click_on',
+            ['//button[@data-action="open-chooser"]', 'xpath_element']);
 
         $node = $this->get_selected_node('xpath_element', '//div[@data-region="modules"]');
         $this->ensure_node_is_visible($node);

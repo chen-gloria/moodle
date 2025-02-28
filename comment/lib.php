@@ -222,7 +222,7 @@ class comment {
         // load template
         $this->template = html_writer::start_tag('div', array('class' => 'comment-message'));
 
-        $this->template .= html_writer::start_tag('div', array('class' => 'comment-message-meta mr-3'));
+        $this->template .= html_writer::start_tag('div', array('class' => 'comment-message-meta me-3'));
 
         $this->template .= html_writer::tag('span', '___picture___', array('class' => 'picture'));
         $this->template .= html_writer::tag('span', '___name___', array('class' => 'user')) . ' - ';
@@ -246,7 +246,7 @@ class comment {
      * @param moodle_page $page The page object to initialise comments within
      *                          If not provided the global $PAGE is used
      */
-    public static function init(moodle_page $page = null) {
+    public static function init(?moodle_page $page = null) {
         global $PAGE;
 
         if (empty($page)) {
@@ -263,7 +263,6 @@ class comment {
         $page->requires->strings_for_js(array(
                 'addcomment',
                 'comments',
-                'commentscount',
                 'commentsrequirelogin',
                 'deletecommentbyon'
             ),
@@ -330,7 +329,7 @@ class comment {
      * @param moodle_page $page
      * @return moodle_url
      */
-    public function get_nojslink(moodle_page $page = null) {
+    public function get_nojslink(?moodle_page $page = null) {
         if ($page === null) {
             global $PAGE;
             $page = $PAGE;
@@ -454,13 +453,11 @@ class comment {
                 // comments open and closed
                 $countstring = '';
                 if ($this->displaytotalcount) {
-                    $countstring = '('.$this->count().')';
+                    $countstring = '(' . html_writer::span($this->count(), 'comment-link-count') . ')';
                 }
                 $collapsedimage= 't/collapsed';
                 if (right_to_left()) {
                     $collapsedimage= 't/collapsed_rtl';
-                } else {
-                    $collapsedimage= 't/collapsed';
                 }
                 $html .= html_writer::start_tag('a', array(
                     'class' => 'comment-link',
@@ -469,7 +466,8 @@ class comment {
                     'role' => 'button',
                     'aria-expanded' => 'false')
                 );
-                $html .= $OUTPUT->pix_icon($collapsedimage, $this->linktext);
+                $html .= html_writer::img($OUTPUT->image_url($collapsedimage), $this->linktext,
+                    ['id' => 'comment-img-' . $this->cid, 'class' => 'icon']);
                 $html .= html_writer::tag('span', $this->linktext.' '.$countstring, array('id' => 'comment-link-text-'.$this->cid));
                 $html .= html_writer::end_tag('a');
             }
@@ -508,7 +506,7 @@ class comment {
                 $html .= html_writer::start_tag('div', array('class' => 'db'));
                 $html .= html_writer::tag('label',
                         get_string('comment', 'comment'),
-                        ['for' => 'dlg-content-'.$this->cid, 'class' => 'sr-only']);
+                        ['for' => 'dlg-content-'.$this->cid, 'class' => 'visually-hidden']);
                 $html .= html_writer::tag('textarea', '', $textareaattrs);
                 $html .= html_writer::end_tag('div'); // .db
 

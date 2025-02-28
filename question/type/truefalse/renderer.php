@@ -91,10 +91,10 @@ class qtype_truefalse_renderer extends qtype_renderer {
 
         $radiotrue = html_writer::empty_tag('input', $trueattributes) .
                 html_writer::tag('label', get_string('true', 'qtype_truefalse'),
-                array('for' => $trueattributes['id'], 'class' => 'ml-1'));
+                array('for' => $trueattributes['id'], 'class' => 'ms-1'));
         $radiofalse = html_writer::empty_tag('input', $falseattributes) .
                 html_writer::tag('label', get_string('false', 'qtype_truefalse'),
-                array('for' => $falseattributes['id'], 'class' => 'ml-1'));
+                array('for' => $falseattributes['id'], 'class' => 'ms-1'));
 
         $result = '';
         $result .= html_writer::tag('div', $question->format_questiontext($qa),
@@ -105,11 +105,11 @@ class qtype_truefalse_renderer extends qtype_renderer {
             $legendclass = '';
             $questionnumber = $options->add_question_identifier_to_label(get_string('selectone', 'qtype_truefalse'), true, true);
         } else {
-            $legendclass = 'sr-only';
+            $legendclass = 'visually-hidden';
             $questionnumber = $options->add_question_identifier_to_label(get_string('answer'), true, true);
         }
         $result .= html_writer::tag('legend', $questionnumber,
-            array('class' => 'prompt h6 font-weight-normal ' . $legendclass));
+            array('class' => 'prompt h6 fw-normal ' . $legendclass));
 
         $result .= html_writer::start_tag('div', array('class' => 'answer'));
         $result .= html_writer::tag('div', $radiotrue . ' ' . $truefeedbackimg,
