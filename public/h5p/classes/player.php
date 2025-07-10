@@ -530,6 +530,10 @@ class player {
 
         $safeparams = $this->core->filterParameters($this->content);
         $decodedparams = json_decode($safeparams);
+
+        // Reorder text tracks based on user's language preference.
+        $decodedparams = $this->override_default_text_track_to_user_language($decodedparams);
+
         $h5poutput = $PAGE->get_renderer('core_h5p');
         $h5poutput->h5p_alter_filtered_parameters(
             $decodedparams,
@@ -540,6 +544,38 @@ class player {
         $safeparams = json_encode($decodedparams);
 
         return $safeparams;
+    }
+
+    /**
+     * Reorders video text tracks so that the track matching the current language appears first.
+     *
+     * This function modifies the given decoded parameters object by re-sorting the
+     * `videoTrack` array. The track whose `srcLang` matches the user's current language
+     * is moved to the top. Other tracks maintain their relative order.
+     *
+     * @param object $params A decoded parameters object that may already contain sorted tracks.
+     * @return object The updated parameters object with reordered video tracks.
+     */
+    private function override_default_text_track_to_user_language(object $params) {
+        if (isset($params->interactiveVideo->video->textTracks->videoTrack)) {
+            $videotracks = $params->interactiveVideo->video->textTracks->videoTrack;
+
+            usort($videotracks, function ($a, $b) {
+                $currentlang = current_language();
+                // Check if the current language track is at the top.
+                if ($a->srcLang == $currentlang) {
+                    return -1; // Place $a at the top.
+                }
+                if ($b->srcLang == $currentlang) {
+                    return 1; // Place $b at the top.
+                }
+                return 0; // Keep other tracks in the same order.
+            });
+
+            $params->interactiveVideo->video->textTracks->videoTrack = $videotracks;
+        }
+
+        return $params;
     }
 
     /**
